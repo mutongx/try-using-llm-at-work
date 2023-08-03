@@ -26,8 +26,23 @@ int main() {
   params->n_gpu_layers = config->getGpuLayers();
 
   muton::playground::llm::LlamaModel model{config->getModel().cStr(), params};
-  muton::playground::llm::LlamaTokenizer tokenizer{model};
   muton::playground::llm::LlamaContext context{model, params};
+
+  muton::playground::llm::LlamaContext::PredictOption predict_option({
+      .repeat_penalty_size = 64,
+      .repeat_penalty = 1.1F,
+      .alpha_presence = 0.0F,
+      .alpha_frequency = 0.0F,
+      .top_k = 40,
+      .tail_free_z = 1.0F,
+      .typical_p = 1.0F,
+      .top_p = 0.95F,
+      .temperature = 0.8F,
+  });
+  muton::playground::llm::LlamaContext::EvalOption eval_option(
+      {.batch_size = 512, .thread_count = std::thread::hardware_concurrency()});
+
+  muton::playground::llm::LlamaTokenizer tokenizer{model};
 
   std::string prompt{
       " [INST] <<SYS>> "
@@ -38,20 +53,11 @@ int main() {
 
   context.FeedBos();
   context.Feed(prompt_tokenized.token_id);
-
   while (true) {
-    context.Eval({.batch_size = 512, .thread_count = std::thread::hardware_concurrency()});
-    auto next_token = context.Predict({
-        .repeat_penalty_size = 64,
-        .repeat_penalty = 1.1F,
-        .alpha_presence = 0.0F,
-        .alpha_frequency = 0.0F,
-        .top_k = 40,
-        .tail_free_z = 1.0F,
-        .typical_p = 1.0F,
-        .top_p = 0.95F,
-        .temperature = 0.8F,
-    });
+    if (!context.Eval(eval_option)) {
+      break;
+    }
+    auto next_token = context.Predict(predict_option);
     fmt::print("{}", llama_token_to_str_with_model(model, next_token));
     if (!context.Feed(next_token)) {
       break;
