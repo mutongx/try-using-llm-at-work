@@ -1,13 +1,20 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
+
 project(try_using_llm_at_work)
 
+set(CMAKE_CUDA_ARCHITECTURES 75)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
 set(LLAMA_CUBLAS ON)
+set(LLAMA_AVX512 ON)
+set(LLAMA_AVX512_VBMI ON)
+set(LLAMA_AVX512_VNNI ON)
+set(LLAMA_BUILD_EXAMPLES ON)
 
 add_subdirectory(thirdparty/capnproto)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/llama.cpp)
 
-add_executable(main src/main.cpp)
-target_link_libraries(main capnp fmt llama)
+add_subdirectory(src)
