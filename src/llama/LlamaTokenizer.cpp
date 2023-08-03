@@ -90,7 +90,7 @@ void LlamaTokenizer::TryAddBigram(SentencePieceBigramQueue& queue,
   if (token_it == mapping_.end()) {
     return;
   }
-  queue.emplace(left, right, scores_[token_it->second], symbol.size());
+  queue.emplace(SentencePieceBigram{left, right, scores_[token_it->second], symbol.size()});
 }
 
 }  // namespace muton::playground::llm
