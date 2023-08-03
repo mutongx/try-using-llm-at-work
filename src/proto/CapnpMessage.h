@@ -5,7 +5,7 @@ namespace muton::playground {
 template <typename BuilderType, typename MessageType>
 class CapnpMessage {
  public:
-  using MessageBuilderType = MessageType::Builder;
+  using MessageBuilderType = typename MessageType::Builder;
 
   CapnpMessage() : message_(builder_.template getRoot<MessageType>()) {}
   CapnpMessage(CapnpMessage const&);
