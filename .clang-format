@@ -1,0 +1,14 @@
+---
+BasedOnStyle: Google
+---
+Language: Cpp
+ColumnLimit: 120
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+BinPackArguments: false
+BinPackParameters: false
+IncludeBlocks: Preserve
+MaxEmptyLinesToKeep: 1

@@ -1,0 +1,15 @@
+---
+Checks: >
+  boost-*,bugprune-*,cert-*,
+  clang-diagnostic-*,clang-analyzer-*,
+  concurrency-*,cppcoreguidelines-,
+  google-*,hicpp-*,llvm-*,
+  modernize-*,performance-*,readability-*,
+  -hicpp-no-array-decay,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+FormatStyle: none
+...
