@@ -26,7 +26,7 @@ int main() {
   muton::playground::llm::LlamaContext context{model, params};
 
   muton::playground::llm::LlamaContext::PredictOption predict_option({
-      .repeat_penalty_size = 64,
+      .repeat_penalty_size = static_cast<size_t>(config->getContextLength()),
       .repeat_penalty = 1.1F,
       .alpha_presence = 0.0F,
       .alpha_frequency = 0.0F,
