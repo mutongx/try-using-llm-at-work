@@ -7,14 +7,13 @@ namespace muton::playground::llm {
 std::array<size_t, 16> LlamaTokenizer::Utf8SymbolSizeLookupTable = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4};
 
 LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) {
-  size_t n_vocab = llama_n_vocab_from_model(model);
-  std::vector<char const*> tmp_vocab(n_vocab);
-  vocabulary_.resize(n_vocab);
-  scores_.resize(n_vocab);
-  llama_get_vocab_from_model(model, tmp_vocab.data(), scores_.data(), static_cast<int>(n_vocab));
-  std::copy(tmp_vocab.begin(), tmp_vocab.end(), vocabulary_.begin());
-  for (int i = 0; i < vocabulary_.size(); ++i) {
-    mapping_[vocabulary_[i]] = i;
+  auto vocabulary = model.GetVocabulary();
+  strings_.resize(vocabulary.size);
+  scores_.resize(vocabulary.size);
+  std::copy(vocabulary.strings.begin(), vocabulary.strings.end(), strings_.begin());
+  std::copy(vocabulary.scores.begin(), vocabulary.scores.end(), scores_.begin());
+  for (int i = 0; i < strings_.size(); ++i) {
+    mapping_[strings_[i]] = i;
   }
 }
 
