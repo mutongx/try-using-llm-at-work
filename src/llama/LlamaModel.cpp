@@ -21,8 +21,17 @@ LlamaModel &LlamaModel::operator=(LlamaModel &&another) noexcept {
   return *this;
 }
 
-LlamaModel::operator llama_model *() const {
+llama_model *LlamaModel::Get() const {
   return model_;
+}
+
+LlamaModel::Vocabulary LlamaModel::GetVocabulary() const {
+  Vocabulary result;
+  result.size = llama_n_vocab_from_model(model_);
+  result.strings.resize(result.size);
+  result.scores.resize(result.size);
+  llama_get_vocab_from_model(model_, result.strings.data(), result.scores.data(), static_cast<int>(result.size));
+  return result;
 }
 
 LlamaModel::~LlamaModel() {

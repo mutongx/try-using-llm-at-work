@@ -2,6 +2,7 @@
 #define MUTON_PLAYGROUND_LLM_LLAMA_LLAMA_MODEL_H
 
 #include <string>
+#include <vector>
 
 #include <llama.h>
 
@@ -19,7 +20,14 @@ class LlamaModel {
   LlamaModel& operator=(LlamaModel&& another) noexcept;
   ~LlamaModel();
 
-  operator llama_model*() const;
+  [[nodiscard]] llama_model* Get() const;
+
+  struct Vocabulary {
+    size_t size{};
+    std::vector<char const*> strings;
+    std::vector<float> scores;
+  };
+  [[nodiscard]] Vocabulary GetVocabulary() const;
 
  private:
   llama_model* model_;
