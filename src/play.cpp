@@ -1,5 +1,4 @@
 #include <thread>
-#include <vector>
 
 #include <fmt/format.h>
 #include <llama.h>
@@ -12,8 +11,6 @@
 #include "llama/LlamaTokenizer.h"
 
 int main() {
-  auto threads = std::thread::hardware_concurrency();
-
   auto config = muton::playground::llm::Config::Read();
   fmt::print("model path: {}\n", config->getModel().cStr());
   fmt::print("context length: {}\n", config->getContextLength());
