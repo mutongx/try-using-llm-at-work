@@ -5,7 +5,9 @@
 namespace muton::playground::llm {
 
 LlamaContext::LlamaContext(LlamaModel const& model, LlamaParams const& params)
-    : context_(llama_new_context_with_model(model, params)), context_size_(params->n_ctx), tokens_(context_size_, 0) {}
+    : context_(llama_new_context_with_model(model.Get(), params)),
+      context_size_(params->n_ctx),
+      tokens_(context_size_, 0) {}
 
 LlamaContext::LlamaContext(LlamaContext&& another) noexcept {
   MoveFrom(std::move(another));
