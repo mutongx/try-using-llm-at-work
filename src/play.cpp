@@ -55,7 +55,7 @@ int main() {
       break;
     }
     auto next_token = context.Predict(predict_option);
-    fmt::print("{}", llama_token_to_str_with_model(model, next_token));
+    fmt::print("{}", llama_token_to_str_with_model(model.Get(), next_token));
     if (!context.Feed(next_token)) {
       break;
     }
