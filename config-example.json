@@ -1,0 +1,24 @@
+{
+  "model": {
+    "path": "./models/llama-2-13b-chat/ggml-model-q4_0.bin",
+    "contextLength": 4096,
+    "batchSize": 512,
+    "gpuLayers": 43,
+    "groupedQueryAttention": 1
+  },
+  "eval": {
+    "batchSize": 512,
+    "threadCount": 0
+  },
+  "predict": {
+    "repeatPenaltySize": 0,
+    "repeatPenalty": 1.1,
+    "alphaPresence": 0.0,
+    "alphaFrequency": 0.0,
+    "topK": 40,
+    "tailFreeZ": 1.0,
+    "typicalP": 1.0,
+    "topP": 0.95,
+    "temperature": 0.8
+  }
+}
