@@ -5,10 +5,10 @@
 namespace muton::playground::llm {
 
 LlamaModel::LlamaModel(std::string const &path, const LlamaParams &params)
-    : model_(llama_load_model_from_file(path.c_str(), params)) {}
+    : model_(llama_load_model_from_file(path.c_str(), params.Get())) {}
 
 LlamaModel::LlamaModel(char const *path, const LlamaParams &params)
-    : model_(llama_load_model_from_file(path, params)) {}
+    : model_(llama_load_model_from_file(path, params.Get())) {}
 
 LlamaModel::LlamaModel(LlamaModel &&another) noexcept {
   model_ = another.model_;

@@ -5,7 +5,7 @@
 namespace muton::playground::llm {
 
 LlamaContext::LlamaContext(LlamaModel const& model, LlamaParams const& params)
-    : context_(llama_new_context_with_model(model.Get(), params)),
+    : context_(llama_new_context_with_model(model.Get(), params.Get())),
       context_size_(params->n_ctx),
       tokens_(context_size_, 0) {}
 
@@ -28,10 +28,6 @@ void LlamaContext::MoveFrom(LlamaContext&& another) noexcept {
   another.context_ = nullptr;
 }
 
-LlamaContext::operator llama_context*() const {
-  return context_;
-}
-
 bool LlamaContext::FeedBos() {
   auto bos = llama_token_bos();
   return Feed(std::span<llama_token>(&bos, 1));
@@ -50,15 +46,15 @@ bool LlamaContext::Feed(std::span<llama_token> tokens_pending) {
   return true;
 }
 
-bool LlamaContext::Eval(LlamaContext::EvalOption option) {
+bool LlamaContext::Eval(proto::EvalOption::Reader option) {
   size_t to_eval = tokens_size_ - tokens_eval_;
   while (to_eval > 0) {
-    size_t current_batch_size = std::min(to_eval, option.batch_size);
+    size_t current_batch_size = std::min(to_eval, static_cast<size_t>(option.getBatchSize()));
     if (llama_eval(context_,
                    tokens_.data() + tokens_eval_,
                    static_cast<int>(current_batch_size),
                    static_cast<int>(tokens_eval_),
-                   static_cast<int>(option.thread_count)) != 0) {
+                   static_cast<int>(option.getThreadCount())) != 0) {
       return false;
     }
     tokens_eval_ += current_batch_size;
@@ -67,7 +63,7 @@ bool LlamaContext::Eval(LlamaContext::EvalOption option) {
   return true;
 }
 
-llama_token LlamaContext::Predict(LlamaContext::PredictOption option) {
+llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
   auto* logits = llama_get_logits(context_);
   auto vocab_size = llama_n_vocab(context_);
   std::vector<llama_token_data> candidates(vocab_size);
@@ -76,23 +72,24 @@ llama_token LlamaContext::Predict(LlamaContext::PredictOption option) {
   }
   llama_token_data_array candidates_p = {candidates.data(), candidates.size(), false};
 
-  size_t repeat_penalty_size = std::min(std::min(tokens_size_, option.repeat_penalty_size), context_size_);
+  size_t repeat_penalty_size =
+      std::min(std::min(tokens_size_, static_cast<size_t>(option.getRepeatPenaltySize())), context_size_);
   llama_sample_repetition_penalty(context_,
                                   &candidates_p,
                                   tokens_.data() + tokens_size_ - repeat_penalty_size,
                                   repeat_penalty_size,
-                                  option.repeat_penalty);
+                                  option.getRepeatPenalty());
   llama_sample_frequency_and_presence_penalties(context_,
                                                 &candidates_p,
                                                 tokens_.data() + tokens_size_ - repeat_penalty_size,
                                                 repeat_penalty_size,
-                                                option.alpha_frequency,
-                                                option.alpha_presence);
-  llama_sample_top_k(context_, &candidates_p, option.top_k, 1);
-  llama_sample_tail_free(context_, &candidates_p, option.tail_free_z, 1);
-  llama_sample_typical(context_, &candidates_p, option.typical_p, 1);
-  llama_sample_top_p(context_, &candidates_p, option.top_p, 1);
-  llama_sample_temperature(context_, &candidates_p, option.temperature);
+                                                option.getAlphaFrequency(),
+                                                option.getAlphaPresence());
+  llama_sample_top_k(context_, &candidates_p, static_cast<int>(option.getTopK()), 1);
+  llama_sample_tail_free(context_, &candidates_p, option.getTailFreeZ(), 1);
+  llama_sample_typical(context_, &candidates_p, option.getTypicalP(), 1);
+  llama_sample_top_p(context_, &candidates_p, option.getTopP(), 1);
+  llama_sample_temperature(context_, &candidates_p, option.getTemperature());
   return llama_sample_token(context_, &candidates_p);
 }
 

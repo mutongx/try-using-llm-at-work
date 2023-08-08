@@ -2,13 +2,14 @@
 
 namespace muton::playground::llm {
 
-LlamaParams::LlamaParams(llama_context_params&& params) : params_(params) {}
-
-LlamaParams LlamaParams::Default() {
-  return llama_context_default_params();
+LlamaParams::LlamaParams(proto::LlamaParams::Reader params) : params_(llama_context_default_params()) {
+  params_.n_ctx = static_cast<int>(params.getContextLength());
+  params_.n_batch = static_cast<int>(params.getBatchSize());
+  params_.n_gpu_layers = static_cast<int>(params.getGpuLayers());
+  params_.n_gqa = static_cast<int>(params.getGroupedQueryAttention());
 }
 
-LlamaParams::operator llama_context_params() const {
+llama_context_params LlamaParams::Get() const {
   return params_;
 }
 

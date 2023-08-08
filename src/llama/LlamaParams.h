@@ -3,15 +3,14 @@
 
 #include <llama.h>
 
+#include "proto/config.capnp.h"
+
 namespace muton::playground::llm {
 
 class LlamaParams {
  public:
-  LlamaParams(llama_context_params&& params);
-
-  static LlamaParams Default();
-
-  operator llama_context_params() const;
+  LlamaParams(proto::LlamaParams::Reader params);
+  llama_context_params Get() const;
   llama_context_params const* operator->() const;
   llama_context_params* operator->();
 

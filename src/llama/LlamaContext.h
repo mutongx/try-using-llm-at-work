@@ -11,6 +11,8 @@
 #include "LlamaModel.h"
 #include "LlamaParams.h"
 
+#include "proto/config.capnp.h"
+
 namespace muton::playground::llm {
 
 class LlamaContext {
@@ -22,31 +24,12 @@ class LlamaContext {
   LlamaContext& operator=(LlamaContext&& another) noexcept;
   ~LlamaContext();
 
-  operator llama_context*() const;
-
   bool FeedBos();
   bool Feed(llama_token token_pending);
   bool Feed(std::span<llama_token> tokens_pending);
 
-  struct EvalOption {
-    size_t batch_size;
-    size_t thread_count;
-  };
-
-  bool Eval(EvalOption option);
-
-  struct PredictOption {
-    size_t repeat_penalty_size;
-    float repeat_penalty;
-    float alpha_presence;
-    float alpha_frequency;
-    int top_k;
-    float tail_free_z;
-    float typical_p;
-    float top_p;
-    float temperature;
-  };
-  llama_token Predict(PredictOption option);
+  bool Eval(proto::EvalOption::Reader option);
+  llama_token Predict(proto::PredictOption::Reader option);
 
  private:
   void MoveFrom(LlamaContext&& another) noexcept;
