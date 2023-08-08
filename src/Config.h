@@ -8,10 +8,10 @@ namespace muton::playground::llm {
 
 class Config {
  public:
-  using ConfigType =CapnpMessage<capnp::MallocMessageBuilder, proto::Config>;
+  using ConfigType = CapnpMessage<capnp::MallocMessageBuilder, proto::Config>;
   static ConfigType Read();
 };
 
-}
+}  // namespace muton::playground::llm
 
 #endif
