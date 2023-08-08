@@ -12,32 +12,18 @@
 
 int main() {
   auto config = muton::playground::llm::Config::Read();
-  fmt::print("model path: {}\n", config->getModel().cStr());
-  fmt::print("context length: {}\n", config->getContextLength());
+  auto cfg_model = config->getModel();
+  auto cfg_params = config->getParams();
+  auto cfg_eval = config->getEval();
+  auto cfg_predict = config->getPredict();
+  if (cfg_eval.getThreadCount() == 0) {
+    cfg_eval.setThreadCount(std::thread::hardware_concurrency());
+  }
 
   muton::playground::llm::LlamaScope backend(false);
-  muton::playground::llm::LlamaParams params{muton::playground::llm::LlamaParams::Default()};
-
-  params->n_ctx = config->getContextLength();
-  params->n_batch = config->getBatchSize();
-  params->n_gpu_layers = config->getGpuLayers();
-
-  muton::playground::llm::LlamaModel model{config->getModel().cStr(), params};
+  muton::playground::llm::LlamaParams params{cfg_params};
+  muton::playground::llm::LlamaModel model{cfg_model.cStr(), params};
   muton::playground::llm::LlamaContext context{model, params};
-
-  muton::playground::llm::LlamaContext::PredictOption predict_option({
-      .repeat_penalty_size = static_cast<size_t>(config->getContextLength()),
-      .repeat_penalty = 1.1F,
-      .alpha_presence = 0.0F,
-      .alpha_frequency = 0.0F,
-      .top_k = 40,
-      .tail_free_z = 1.0F,
-      .typical_p = 1.0F,
-      .top_p = 0.95F,
-      .temperature = 0.8F,
-  });
-  muton::playground::llm::LlamaContext::EvalOption eval_option(
-      {.batch_size = 512, .thread_count = std::thread::hardware_concurrency()});
 
   muton::playground::llm::LlamaTokenizer tokenizer{model};
 
@@ -47,15 +33,19 @@ int main() {
       "<</SYS>> "
       "Hello! What's your name? [/INST] "};
   auto prompt_tokenized = tokenizer.Tokenize(prompt);
+  for (auto token : prompt_tokenized.token_id) {
+    fmt::print("{}", llama_token_to_str_with_model(model.Get(), token));
+  }
 
   context.FeedBos();
   context.Feed(prompt_tokenized.token_id);
   while (true) {
-    if (!context.Eval(eval_option)) {
+    if (!context.Eval(cfg_eval)) {
       break;
     }
-    auto next_token = context.Predict(predict_option);
+    auto next_token = context.Predict(cfg_predict);
     fmt::print("{}", llama_token_to_str_with_model(model.Get(), next_token));
+    static_cast<void>(std::fflush(stdout));
     if (!context.Feed(next_token)) {
       break;
     }
