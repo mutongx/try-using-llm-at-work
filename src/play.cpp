@@ -1,5 +1,3 @@
-#include <thread>
-
 #include <fmt/format.h>
 #include <llama.h>
 
@@ -16,9 +14,6 @@ int main() {
   auto cfg_params = config->getParams();
   auto cfg_eval = config->getEval();
   auto cfg_predict = config->getPredict();
-  if (cfg_eval.getThreadCount() == 0) {
-    cfg_eval.setThreadCount(std::thread::hardware_concurrency());
-  }
 
   muton::playground::llm::LlamaScope backend(false);
   muton::playground::llm::LlamaParams params{cfg_params};
