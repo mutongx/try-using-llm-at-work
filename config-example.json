@@ -8,7 +8,7 @@
   },
   "eval": {
     "batchSize": 512,
-    "threadCount": 0
+    "threadCount": 1
   },
   "predict": {
     "repeatPenaltySize": 0,

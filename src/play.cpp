@@ -31,7 +31,7 @@ int main() {
       " [INST] <<SYS>> "
       "You are a helpful assistant. "
       "<</SYS>> "
-      "Hello! What's your name? [/INST] "};
+      "Write a python program to compute primes. Write extensive comments. [/INST] "};
   auto prompt_tokenized = tokenizer.Tokenize(prompt);
   for (auto token : prompt_tokenized.token_id) {
     fmt::print("{}", llama_token_to_str_with_model(model.Get(), token));
@@ -53,4 +53,5 @@ int main() {
       break;
     }
   }
+  fmt::print("\n");
 }
