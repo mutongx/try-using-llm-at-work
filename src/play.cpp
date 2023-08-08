@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <fmt/format.h>
 #include <llama.h>
 
@@ -22,11 +24,8 @@ int main() {
 
   muton::playground::llm::LlamaTokenizer tokenizer{model};
 
-  std::string prompt{
-      " [INST] <<SYS>> "
-      "You are a helpful assistant. "
-      "<</SYS>> "
-      "Write a python program to compute primes. Write extensive comments. [/INST] "};
+  std::ifstream prompt_file("prompt.txt", std::ios::in);
+  std::string prompt{std::istreambuf_iterator<char>(prompt_file), std::istreambuf_iterator<char>()};
   auto prompt_tokenized = tokenizer.Tokenize(prompt);
   for (auto token : prompt_tokenized.token_id) {
     fmt::print("{}", llama_token_to_str_with_model(model.Get(), token));
