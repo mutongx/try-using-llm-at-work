@@ -1,27 +1,35 @@
+#include <type_traits>
+#include <utility>
+
 #include <capnp/message.h>
 
 namespace muton::playground {
 
-template <typename BuilderType, typename MessageType>
+template <typename StorageType, typename MessageType>
 class CapnpMessage {
  public:
-  using MessageBuilderType = typename MessageType::Builder;
+  using MessageRootType = std::conditional_t<std::is_base_of_v<capnp::MessageBuilder, StorageType>,
+                                             typename MessageType::Builder,
+                                             typename MessageType::Reader>;
 
-  CapnpMessage() : message_(builder_.template getRoot<MessageType>()) {}
+  template <typename... Args, typename = std::enable_if_t<std::is_constructible_v<StorageType, Args...>>>
+  CapnpMessage(Args&&... args)
+      : storage_(std::forward<Args>(args)...), message_(storage_.template getRoot<MessageType>()) {}
   CapnpMessage(CapnpMessage const&);
   CapnpMessage& operator=(CapnpMessage const&);
   CapnpMessage(CapnpMessage&&) = default;
   CapnpMessage& operator=(CapnpMessage&&) = default;
-  MessageBuilderType Root() {
+  ~CapnpMessage() = default;
+  MessageRootType Root() {
     return message_;
   }
-  MessageBuilderType* operator->() {
+  MessageRootType* operator->() {
     return &message_;
   }
 
  private:
-  BuilderType builder_;
-  MessageBuilderType message_;
+  StorageType storage_;
+  MessageRootType message_;
 };
 
 }  // namespace muton::playground
