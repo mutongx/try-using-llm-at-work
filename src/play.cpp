@@ -23,7 +23,6 @@ int main() {
   muton::playground::llm::LlamaContext context{model, params};
 
   muton::playground::llm::LlamaTokenizer tokenizer{model};
-
   std::ifstream prompt_file("prompt.txt", std::ios::in);
   std::string prompt{std::istreambuf_iterator<char>(prompt_file), std::istreambuf_iterator<char>()};
   auto prompt_tokenized = tokenizer.Tokenize(prompt);
