@@ -1,9 +1,12 @@
+#ifndef MUTON_PLAYGROUND_LLM_PROTO_CAPNP_MESSAGE_H
+#define MUTON_PLAYGROUND_LLM_PROTO_CAPNP_MESSAGE_H
+
 #include <type_traits>
 #include <utility>
 
 #include <capnp/message.h>
 
-namespace muton::playground {
+namespace muton::playground::llm {
 
 template <typename StorageType, typename MessageType>
 class CapnpMessage {
@@ -32,4 +35,6 @@ class CapnpMessage {
   MessageRootType message_;
 };
 
-}  // namespace muton::playground
+}  // namespace muton::playground::llm
+
+#endif  // MUTON_PLAYGROUND_LLM_PROTO_CAPNP_MESSAGE_H
