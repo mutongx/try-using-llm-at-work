@@ -17,7 +17,7 @@ LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) {
   }
 }
 
-LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string const& text) {
+LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
   TokenizeResult result;
   SentencePieceBigramQueue queue;
   SentencePieceSymbolStorage symbols;

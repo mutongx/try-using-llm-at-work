@@ -22,7 +22,7 @@ class LlamaTokenizer {
     std::vector<size_t> token_pos;
     std::vector<size_t> token_size;
   };
-  TokenizeResult Tokenize(std::string const& text);
+  TokenizeResult Tokenize(std::string_view text);
 
  private:
   static std::array<size_t, 16> Utf8SymbolSizeLookupTable;
