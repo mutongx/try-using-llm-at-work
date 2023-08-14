@@ -55,23 +55,25 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
     TryAddBigram(queue, symbols, sym_left.prev, item.left);
     TryAddBigram(queue, symbols, item.left, sym_left.next);
   }
-  for (index = 0; index != -1; index = symbols[index].next) {
-    auto& item = symbols[index];
-    std::string_view symbol{item.ptr, item.size};
-    auto token_it = mapping_.find(symbol);
-    if (token_it == mapping_.end()) {
-      for (size_t i = 0; i < symbol.size(); ++i) {
-        auto token_id = mapping_.at(std::string_view(symbol.data() + i, 1));
-        result.token_id.push_back(token_id);
-        result.token_pos.push_back(symbol.data() + i - text.data());
-        result.token_size.push_back(1);
+  if (!symbols.empty()) {
+    for (index = 0; index != -1; index = symbols[index].next) {
+      auto& item = symbols[index];
+      std::string_view symbol{item.ptr, item.size};
+      auto token_it = mapping_.find(symbol);
+      if (token_it == mapping_.end()) {
+        for (size_t i = 0; i < symbol.size(); ++i) {
+          auto token_id = mapping_.at(std::string_view(symbol.data() + i, 1));
+          result.token_id.push_back(token_id);
+          result.token_pos.push_back(symbol.data() + i - text.data());
+          result.token_size.push_back(1);
+          result.size += 1;
+        }
+      } else {
+        result.token_id.push_back(token_it->second);
+        result.token_pos.push_back(item.ptr - text.data());
+        result.token_size.push_back(item.size);
         result.size += 1;
       }
-    } else {
-      result.token_id.push_back(token_it->second);
-      result.token_pos.push_back(item.ptr - text.data());
-      result.token_size.push_back(item.size);
-      result.size += 1;
     }
   }
   return result;
