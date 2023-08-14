@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 3.20)
 capnp_generate_cpp(PROTO_CONFIG_SRCS PROTO_CONFIG_HDRS proto/config.capnp)
 capnp_generate_cpp(PROTO_SERVICE_SRCS PROTO_SERVICE_HDRS proto/service.capnp)
 
+set(CAPNP_WRAPPER_HDRS
+        proto/CapnpMessage.h
+        proto/CapnpUtilities.h
+)
+
 set(LLAMA_WRAPPER_SRCS
         llama/LlamaScope.cpp
         llama/LlamaParams.cpp
@@ -20,7 +25,7 @@ set(LLAMA_WRAPPER_HDRS
 add_executable(play
         ${PROTO_CONFIG_SRCS} ${PROTO_CONFIG_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
-        proto/CapnpMessage.h
+        ${CAPNP_WRAPPER_HDRS}
         Config.h Config.cpp
         play.cpp
 )
@@ -32,7 +37,7 @@ add_executable(service
         ${PROTO_CONFIG_SRCS} ${PROTO_CONFIG_HDRS}
         ${PROTO_SERVICE_SRCS} ${PROTO_SERVICE_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
-        proto/CapnpMessage.h
+        ${CAPNP_WRAPPER_HDRS}
         Config.h Config.cpp
         service.cpp
 )
