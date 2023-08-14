@@ -3,7 +3,7 @@
 #include <fmt/format.h>
 #include <llama.h>
 
-#include "Config.h"
+#include "config/Config.h"
 #include "llama/LlamaContext.h"
 #include "llama/LlamaModel.h"
 #include "llama/LlamaParams.h"
