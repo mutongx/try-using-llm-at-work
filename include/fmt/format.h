@@ -1387,8 +1387,8 @@ FMT_CONSTEXPR auto format_uint(Char* buffer, UInt value, int num_digits,
 }
 
 template <unsigned BASE_BITS, typename Char, typename It, typename UInt>
-inline auto format_uint(It out, UInt value, int num_digits, bool upper = false)
-    -> It {
+FMT_CONSTEXPR inline auto format_uint(It out, UInt value, int num_digits,
+                                      bool upper = false) -> It {
   if (auto ptr = to_pointer<Char>(out, to_unsigned(num_digits))) {
     format_uint<BASE_BITS>(ptr, value, num_digits, upper);
     return out;
@@ -4287,7 +4287,8 @@ auto join(Range&& range, string_view sep)
     std::string answer = fmt::to_string(42);
   \endrst
  */
-template <typename T, FMT_ENABLE_IF(!std::is_integral<T>::value)>
+template <typename T, FMT_ENABLE_IF(!std::is_integral<T>::value &&
+                                    !detail::has_format_as<T>::value)>
 inline auto to_string(const T& value) -> std::string {
   auto buffer = memory_buffer();
   detail::write<char>(appender(buffer), value);
@@ -4310,6 +4311,12 @@ FMT_NODISCARD auto to_string(const basic_memory_buffer<Char, SIZE>& buf)
   auto size = buf.size();
   detail::assume(size < std::basic_string<Char>().max_size());
   return std::basic_string<Char>(buf.data(), size);
+}
+
+template <typename T, FMT_ENABLE_IF(!std::is_integral<T>::value &&
+                                    detail::has_format_as<T>::value)>
+inline auto to_string(const T& value) -> std::string {
+  return to_string(format_as(value));
 }
 
 namespace detail {
