@@ -13,18 +13,19 @@ namespace muton::playground::llm {
 
 class ModelServer : public proto::Model::Server {
  public:
-  ModelServer(LlamaModel& model_);
+  ModelServer(LlamaParams& params, LlamaModel& model);
   ModelServer(ModelServer&&) = delete;
   ModelServer(ModelServer const&) = delete;
   ModelServer& operator=(ModelServer&&) = delete;
   ModelServer& operator=(ModelServer const&) = delete;
   ~ModelServer() = default;
 
-  kj::Promise<void> getTokenizer(GetTokenizerContext context);
+  kj::Promise<void> newTokenizer(NewTokenizerContext context) override;
+  kj::Promise<void> newContext(NewContextContext context) override;
 
  private:
+  LlamaParams& params_;
   LlamaModel& model_;
-  LlamaTokenizer tokenizer_;
 };
 
 }  // namespace muton::playground::llm
