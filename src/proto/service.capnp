@@ -16,8 +16,8 @@ interface App {
 }
 
 interface Model {
-  getTokenizer @0 () -> (tokenizer :Tokenizer);
-  getContext @1 () -> (context :Context);
+  newTokenizer @0 () -> (tokenizer :Tokenizer);
+  newContext @1 () -> (context :Context);
 }
 
 interface Tokenizer {
