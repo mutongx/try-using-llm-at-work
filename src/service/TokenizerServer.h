@@ -9,7 +9,7 @@ namespace muton::playground::llm {
 
 class TokenizerServer : public proto::Tokenizer::Server {
  public:
-  TokenizerServer(LlamaTokenizer& tokenizer);
+  TokenizerServer(LlamaModel& model);
   TokenizerServer(TokenizerServer&&) = delete;
   TokenizerServer(TokenizerServer const&) = delete;
   TokenizerServer& operator=(TokenizerServer&&) = delete;
@@ -19,7 +19,7 @@ class TokenizerServer : public proto::Tokenizer::Server {
   kj::Promise<void> tokenize(TokenizeContext context);
 
  private:
-  LlamaTokenizer& tokenizer_;
+  LlamaTokenizer tokenizer_;
 };
 
 }  // namespace muton::playground::llm

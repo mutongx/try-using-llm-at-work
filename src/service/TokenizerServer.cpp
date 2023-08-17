@@ -4,7 +4,7 @@
 
 namespace muton::playground::llm {
 
-TokenizerServer::TokenizerServer(LlamaTokenizer& tokenizer) : tokenizer_(tokenizer) {}
+TokenizerServer::TokenizerServer(LlamaModel& model) : tokenizer_(model) {}
 
 kj::Promise<void> TokenizerServer::tokenize(TokenizeContext context) {
   auto text_proto = context.getParams().getText();
