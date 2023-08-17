@@ -16,7 +16,7 @@ class TokenizerServer : public proto::Tokenizer::Server {
   TokenizerServer& operator=(TokenizerServer const&) = delete;
   ~TokenizerServer() = default;
 
-  kj::Promise<void> tokenize(TokenizeContext context);
+  kj::Promise<void> tokenize(TokenizeContext context) override;
 
  private:
   LlamaTokenizer tokenizer_;

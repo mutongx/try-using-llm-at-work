@@ -1,8 +1,6 @@
 #include "AppServer.h"
 #include "ModelServer.h"
 
-#include "capnp/rpc.h"
-
 namespace muton::playground::llm {
 
 AppServer::AppServer(LlamaParams& params, LlamaModel& model) : params_(params), model_(model) {}

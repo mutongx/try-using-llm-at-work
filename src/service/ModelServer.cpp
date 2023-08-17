@@ -2,8 +2,6 @@
 #include "ContextServer.h"
 #include "TokenizerServer.h"
 
-#include <fmt/format.h>
-
 namespace muton::playground::llm {
 
 ModelServer::ModelServer(LlamaParams& params, LlamaModel& model) : params_(params), model_(model) {}
