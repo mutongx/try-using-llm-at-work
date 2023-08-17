@@ -2,6 +2,6 @@
 
 namespace muton::playground::llm {
 
-ContextServer::ContextServer(LlamaParams& params, LlamaModel& model) : context_(model, params) {}
+ContextServer::ContextServer(LlamaParams& params, LlamaModel& model) : context_(params, model) {}
 
 }  // namespace muton::playground::llm
