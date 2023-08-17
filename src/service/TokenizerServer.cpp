@@ -1,6 +1,6 @@
 #include "TokenizerServer.h"
 
-#include "proto/CapnpUtilities.h"
+#include "capnp/CapnpUtilities.h"
 
 namespace muton::playground::llm {
 

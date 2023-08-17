@@ -7,7 +7,7 @@
 #include "llama/LlamaScope.h"
 #include "llama/LlamaTokenizer.h"
 
-#include "proto/service.capnp.h"
+#include "proto.capnp.h"
 
 namespace muton::playground::llm {
 

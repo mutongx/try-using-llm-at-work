@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 
-capnp_generate_cpp(PROTO_CONFIG_SRCS PROTO_CONFIG_HDRS proto/config.capnp)
-capnp_generate_cpp(PROTO_SERVICE_SRCS PROTO_SERVICE_HDRS proto/service.capnp)
+capnp_generate_cpp(CAPNP_PROTO_SRCS CAPNP_PROTO_HDRS proto.capnp)
 
 set(CAPNP_WRAPPER_HDRS
-        proto/CapnpMessage.h
-        proto/CapnpUtilities.h)
+        capnp/CapnpMessage.h
+        capnp/CapnpUtilities.h)
 
 set(LLAMA_WRAPPER_SRCS
         llama/LlamaScope.cpp
@@ -40,8 +39,8 @@ set(SERVICE_HDRS
         service/TokenizerServer.h)
 
 add_executable(play
+        ${CAPNP_PROTO_SRCS} ${CAPNP_PROTO_HDRs}
         ${CAPNP_WRAPPER_HDRS}
-        ${PROTO_CONFIG_SRCS} ${PROTO_CONFIG_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
         ${CONFIG_SRCS} ${CONFIG_HDRS}
         play.cpp
@@ -52,8 +51,7 @@ target_include_directories(play PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURR
 
 add_executable(service
         ${CAPNP_WRAPPER_HDRS}
-        ${PROTO_CONFIG_SRCS} ${PROTO_CONFIG_HDRS}
-        ${PROTO_SERVICE_SRCS} ${PROTO_SERVICE_HDRS}
+        ${CAPNP_PROTO_SRCS} ${CAPNP_PROTO_HDRs}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
         ${CONFIG_SRCS} ${CONFIG_HDRS}
         ${SERVICE_HDRS} ${SERVICE_SRCS}

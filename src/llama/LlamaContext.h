@@ -11,7 +11,7 @@
 #include "LlamaModel.h"
 #include "LlamaParams.h"
 
-#include "proto/config.capnp.h"
+#include "proto.capnp.h"
 
 namespace muton::playground::llm {
 
