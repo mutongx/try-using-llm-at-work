@@ -12,17 +12,18 @@ namespace muton::playground::llm {
 
 class AppServer : public proto::App::Server {
  public:
-  AppServer(LlamaModel& model);
-  AppServer(AppServer &&) = delete;
+  AppServer(LlamaParams& params, LlamaModel& model);
+  AppServer(AppServer&&) = delete;
   AppServer(AppServer const&) = delete;
-  AppServer& operator=(AppServer &&) = delete;
+  AppServer& operator=(AppServer&&) = delete;
   AppServer& operator=(AppServer const&) = delete;
   ~AppServer() = default;
 
   kj::Promise<void> getModel(GetModelContext context) override;
 
  private:
-   LlamaModel& model_;
+  LlamaParams& params_;
+  LlamaModel& model_;
 };
 
 }  // namespace muton::playground::llm
