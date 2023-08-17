@@ -17,7 +17,7 @@ namespace muton::playground::llm {
 
 class LlamaContext {
  public:
-  LlamaContext(LlamaModel const& model, LlamaParams const& params);
+  LlamaContext(LlamaParams const& params, LlamaModel const& model);
   LlamaContext(LlamaContext const&) = delete;
   LlamaContext(LlamaContext&& another) noexcept;
   LlamaContext& operator=(LlamaContext const&) = delete;
@@ -34,13 +34,14 @@ class LlamaContext {
  private:
   void MoveFrom(LlamaContext&& another) noexcept;
 
-  llama_context* context_{};
   size_t context_size_{};
 
   std::vector<llama_token> tokens_{};
   size_t tokens_begin_{};
   size_t tokens_size_{};
   size_t tokens_eval_{};
+
+  llama_context* context_{};
 };
 
 }  // namespace muton::playground::llm

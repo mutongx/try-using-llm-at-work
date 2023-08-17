@@ -4,10 +4,10 @@
 
 namespace muton::playground::llm {
 
-LlamaContext::LlamaContext(LlamaModel const& model, LlamaParams const& params)
-    : context_(llama_new_context_with_model(model.Get(), params.Get())),
-      context_size_(params->n_ctx),
-      tokens_(context_size_, 0) {}
+LlamaContext::LlamaContext(LlamaParams const& params, LlamaModel const& model)
+    : context_size_(params->n_ctx),
+      tokens_(context_size_, 0),
+      context_(llama_new_context_with_model(model.Get(), params.Get())) {}
 
 LlamaContext::LlamaContext(LlamaContext&& another) noexcept {
   MoveFrom(std::move(another));
@@ -19,12 +19,12 @@ LlamaContext& LlamaContext::operator=(LlamaContext&& another) noexcept {
 }
 
 void LlamaContext::MoveFrom(LlamaContext&& another) noexcept {
-  context_ = another.context_;
   context_size_ = another.context_size_;
   tokens_ = std::move(another.tokens_);
   tokens_begin_ = another.tokens_begin_;
   tokens_size_ = another.tokens_size_;
   tokens_eval_ = another.tokens_eval_;
+  context_ = another.context_;
   another.context_ = nullptr;
 }
 
