@@ -11,7 +11,7 @@ int main() {
   muton::playground::llm::LlamaScope scope(true);
   muton::playground::llm::LlamaParams params(config->getParams());
   muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
-  capnp::EzRpcServer server(kj::heap<muton::playground::llm::AppServer>(model), "127.0.0.1:2333");
+  capnp::EzRpcServer server(kj::heap<muton::playground::llm::AppServer>(params, model), "127.0.0.1:2333");
   auto& waitScope = server.getWaitScope();
   kj::NEVER_DONE.wait(waitScope);
 }

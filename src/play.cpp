@@ -20,7 +20,7 @@ int main() {
   muton::playground::llm::LlamaScope backend(false);
   muton::playground::llm::LlamaParams params{cfg_params};
   muton::playground::llm::LlamaModel model{cfg_model.cStr(), params};
-  muton::playground::llm::LlamaContext context{model, params};
+  muton::playground::llm::LlamaContext context{params, model};
 
   muton::playground::llm::LlamaTokenizer tokenizer{model};
   std::ifstream prompt_file("prompt.txt", std::ios::in);
