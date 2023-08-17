@@ -30,11 +30,13 @@ set(CONFIG_HDRS
 set(SERVICE_SRCS
         service/AppServer.cpp
         service/ModelServer.cpp
+        service/ContextServer.cpp
         service/TokenizerServer.cpp)
 
 set(SERVICE_HDRS
         service/AppServer.h
         service/ModelServer.h
+        service/ContextServer.h
         service/TokenizerServer.h)
 
 add_executable(play
