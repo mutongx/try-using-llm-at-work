@@ -74,9 +74,10 @@ interface Context {
   feedBos @3 () -> (success :Bool, context :Context);
   feedEos @4 () -> (success :Bool, context :Context);
   eval @5 (option :EvalOption) -> (success :Bool, context :Context);
-  predict @6 (option :PredictOption, callback :PredictCallback) -> (success :Bool, context :Context);
-  predictUntilEos @7 (option :PredictOption, callback :PredictCallback) -> (success :Bool, context :Context);
+  predict @6 (callback :PredictCallback, option :PredictOption) -> (success :Bool, context :Context);
+  predictUntilEos @7 (callback :PredictCallback, evalOption :EvalOption, predictOption :PredictOption) -> (success :Bool, context :Context);
   interface PredictCallback {
-    callback @0 (token :Token) -> ();
+    callback @0 (token :Token) -> stream;
+    done @1 ();
   }
 }
