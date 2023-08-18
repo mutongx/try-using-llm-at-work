@@ -24,9 +24,10 @@ class LlamaContext {
   LlamaContext& operator=(LlamaContext&& another) noexcept;
   ~LlamaContext();
 
-  bool FeedBos();
   bool Feed(llama_token token_pending);
   bool Feed(std::span<llama_token> tokens_pending);
+  bool FeedBos();
+  bool FeedEos();
 
   bool Eval(proto::EvalOption::Reader option);
   llama_token Predict(proto::PredictOption::Reader option);

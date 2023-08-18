@@ -33,6 +33,11 @@ bool LlamaContext::FeedBos() {
   return Feed(std::span<llama_token>(&bos, 1));
 }
 
+bool LlamaContext::FeedEos() {
+  auto eos = llama_token_eos();
+  return Feed(std::span<llama_token>(&eos, 1));
+}
+
 bool LlamaContext::Feed(llama_token token_pending) {
   return Feed(std::span<llama_token>(&token_pending, 1));
 }
