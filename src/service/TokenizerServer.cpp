@@ -7,14 +7,37 @@ namespace muton::playground::llm {
 TokenizerServer::TokenizerServer(LlamaModel& model) : tokenizer_(model) {}
 
 kj::Promise<void> TokenizerServer::tokenize(TokenizeContext context) {
-  auto text_proto = context.getParams().getText();
-  auto text_view = std::string_view(text_proto.cStr(), text_proto.size());
-  auto tokenize_result = tokenizer_.Tokenize(text_view);
-  auto response = context.getResults().getTokens();
-  response.setSize(tokenize_result.size);
-  response.adoptTokenId(CreateCapnpList<int32_t>(context.getResultsOrphanage(), tokenize_result.token_id));
-  response.adoptTokenPos(CreateCapnpList<uint32_t>(context.getResultsOrphanage(), tokenize_result.token_pos));
-  response.adoptTokenSize(CreateCapnpList<uint32_t>(context.getResultsOrphanage(), tokenize_result.token_size));
+  class TokenizeResultServer : public proto::Tokens::Server {
+   public:
+    TokenizeResultServer(LlamaTokenizer::TokenizeResult result) : result_(std::move(result)) {}
+    kj::Promise<void> getSize(GetSizeContext context) override {
+      context.getResults().setResult(result_.size);
+      return kj::READY_NOW;
+    }
+    kj::Promise<void> getTokenId(GetTokenIdContext context) override {
+      context.getResults().adoptResult(CreateCapnpList<int32_t>(context.getResultsOrphanage(), result_.token_id));
+      return kj::READY_NOW;
+    }
+    kj::Promise<void> getTokenPos(GetTokenPosContext context) override {
+      context.getResults().adoptResult(CreateCapnpList<uint32_t>(context.getResultsOrphanage(), result_.token_pos));
+      return kj::READY_NOW;
+    }
+    kj::Promise<void> getTokenSize(GetTokenSizeContext context) override {
+      context.getResults().adoptResult(CreateCapnpList<uint32_t>(context.getResultsOrphanage(), result_.token_size));
+      return kj::READY_NOW;
+    }
+    kj::Promise<void> getInternalPtr(GetInternalPtrContext context) override {
+      context.getResults().setPtr(reinterpret_cast<uint64_t>(&result_));
+      return kj::READY_NOW;
+    }
+
+   private:
+    LlamaTokenizer::TokenizeResult result_;
+  };
+
+  auto text = context.getParams().getText();
+  auto text_view = std::string_view(text.cStr(), text.size());
+  context.getResults().setTokens(kj::heap<TokenizeResultServer>(tokenizer_.Tokenize(text_view)));
   return kj::READY_NOW;
 };
 
