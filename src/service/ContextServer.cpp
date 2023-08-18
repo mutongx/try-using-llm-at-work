@@ -69,15 +69,23 @@ kj::Promise<void> ContextServer::predict(proto::Context::Server::PredictContext 
   return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
     auto params = context.getParams();
     auto results = context.getResults();
-    return predictInternal(params.getCallback(), params.getOption()).then([this, results](bool success) mutable {
-      results.setSuccess(success);
+    return predictInternal(params.getCallback(), params.getOption()).then([this, results]() mutable {
+      results.setSuccess(true);
       results.setContext(this->thisCap());
     });
   });
 }
 
 kj::Promise<void> ContextServer::predictUntilEos(proto::Context::Server::PredictUntilEosContext context) {
-  return kj::READY_NOW;
+  return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
+    auto params = context.getParams();
+    auto results = context.getResults();
+    return predictUntilEosInternal(params.getCallback(), params.getEvalOption(), params.getPredictOption())
+        .then([this, results]() mutable {
+          results.setSuccess(true);
+          results.setContext(this->thisCap());
+        });
+  });
 }
 
 kj::Promise<bool> ContextServer::feedTokensInternal(proto::Tokens::Client tokens, int32_t begin, int32_t end) {
@@ -103,9 +111,35 @@ kj::Promise<bool> ContextServer::feedTokensInternal(proto::Tokens::Client tokens
   });
 }
 
-kj::Promise<bool> ContextServer::predictInternal(proto::Context::PredictCallback::Client callback,
+kj::Promise<void> ContextServer::predictInternal(proto::Context::PredictCallback::Client callback,
                                                  proto::PredictOption::Reader option) {
   auto token = context_.Predict(option);
+  return newPredictRequest(callback, token).send();
+}
+
+kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::PredictCallback::Client callback,
+                                                         proto::EvalOption::Reader eval_option,
+                                                         proto::PredictOption::Reader predict_option) {
+  context_.Eval(eval_option);
+  auto token = context_.Predict(predict_option);
+  if (!context_.Feed(token)) {
+    return callback.doneRequest().send().ignoreResult();
+  }
+  if (token == model_.GetEos()) {
+    return callback.doneRequest().send().ignoreResult();
+  }
+  return newPredictRequest(callback, token)
+      .send()
+      .then([this,
+             callback = kj::mv(callback),
+             eval_option = kj::mv(eval_option),
+             predict_option = kj::mv(predict_option)]() mutable {
+        return predictUntilEosInternal(kj::mv(callback), kj::mv(eval_option), kj::mv(predict_option));
+      });
+}
+
+capnp::StreamingRequest<proto::Context::PredictCallback::CallbackParams> ContextServer::newPredictRequest(
+    proto::Context::PredictCallback::Client& callback, llama_token token) {
   auto request = callback.callbackRequest();
   auto result = request.getToken();
   result.setId(token);
@@ -117,9 +151,7 @@ kj::Promise<bool> ContextServer::predictInternal(proto::Context::PredictCallback
     result.setType(proto::Token::TokenType::NORMAL);
   }
   result.setStr(model_.GetTokenString(token));
-  return request.send().then([](auto) {
-    return true;
-  });
+  return request;
 }
 
 }  // namespace muton::playground::llm

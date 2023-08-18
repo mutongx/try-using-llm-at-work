@@ -28,7 +28,14 @@ class ContextServer : public proto::Context::Server {
 
  private:
   kj::Promise<bool> feedTokensInternal(proto::Tokens::Client tokens, int32_t begin, int32_t end);
-  kj::Promise<bool> predictInternal(proto::Context::PredictCallback::Client callback, proto::PredictOption::Reader option);
+  kj::Promise<void> predictInternal(proto::Context::PredictCallback::Client callback,
+                                    proto::PredictOption::Reader option);
+  kj::Promise<void> predictUntilEosInternal(proto::Context::PredictCallback::Client callback,
+                                            proto::EvalOption::Reader eval_option,
+                                            proto::PredictOption::Reader predict_option);
+
+  capnp::StreamingRequest<proto::Context::PredictCallback::CallbackParams> newPredictRequest(
+      proto::Context::PredictCallback::Client& callback, llama_token token);
 
   LlamaModel& model_;
   LlamaContext context_;
