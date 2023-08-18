@@ -9,7 +9,7 @@ ContextServer::ContextServer(LlamaParams& params, LlamaModel& model) : model_(mo
 kj::Promise<void> ContextServer::nop(proto::Context::Server::NopContext context) {
   auto results = context.getResults();
   results.setSuccess(true);
-  results.setContext(this->thisCap());
+  results.setContext(thisCap());
   return kj::READY_NOW;
 }
 
@@ -20,7 +20,7 @@ kj::Promise<void> ContextServer::feedTokens(proto::Context::Server::FeedTokensCo
     return feedTokensInternal(params.getTokens(), params.getBegin(), params.getEnd())
         .then([this, results](bool success) mutable {
           results.setSuccess(success);
-          results.setContext(this->thisCap());
+          results.setContext(thisCap());
         });
   });
 }
@@ -31,7 +31,7 @@ kj::Promise<void> ContextServer::feedToken(proto::Context::Server::FeedTokenCont
     auto results = context.getResults();
     auto success = context_.Feed(params.getToken());
     results.setSuccess(success);
-    results.setContext(this->thisCap());
+    results.setContext(thisCap());
   });
 }
 
@@ -41,7 +41,7 @@ kj::Promise<void> ContextServer::feedBos(proto::Context::Server::FeedBosContext 
     auto results = context.getResults();
     auto success = context_.FeedBos();
     results.setSuccess(success);
-    results.setContext(this->thisCap());
+    results.setContext(thisCap());
   });
 }
 
@@ -51,7 +51,7 @@ kj::Promise<void> ContextServer::feedEos(proto::Context::Server::FeedEosContext 
     auto results = context.getResults();
     auto success = context_.FeedEos();
     results.setSuccess(success);
-    results.setContext(this->thisCap());
+    results.setContext(thisCap());
   });
 }
 
@@ -61,7 +61,7 @@ kj::Promise<void> ContextServer::eval(proto::Context::Server::EvalContext contex
     auto results = context.getResults();
     auto success = context_.Eval(params.getOption());
     results.setSuccess(success);
-    results.setContext(this->thisCap());
+    results.setContext(thisCap());
   });
 }
 
@@ -72,7 +72,7 @@ kj::Promise<void> ContextServer::predict(proto::Context::Server::PredictContext 
     auto callback = params.getCallback();
     auto token = context_.Predict(params.getOption());
     results.setSuccess(true);
-    results.setContext(this->thisCap());
+    results.setContext(thisCap());
     return newPredictRequest(callback, token).send();
   });
 }
@@ -84,7 +84,7 @@ kj::Promise<void> ContextServer::predictUntilEos(proto::Context::Server::Predict
     return predictUntilEosInternal(params.getCallback(), params.getEvalOption(), params.getPredictOption())
         .then([this, results]() mutable {
           results.setSuccess(true);
-          results.setContext(this->thisCap());
+          results.setContext(thisCap());
         });
   });
 }
