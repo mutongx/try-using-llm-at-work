@@ -69,10 +69,11 @@ kj::Promise<void> ContextServer::predict(proto::Context::Server::PredictContext 
   return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
     auto params = context.getParams();
     auto results = context.getResults();
-    return predictInternal(params.getCallback(), params.getOption()).then([this, results]() mutable {
-      results.setSuccess(true);
-      results.setContext(this->thisCap());
-    });
+    auto callback = params.getCallback();
+    auto token = context_.Predict(params.getOption());
+    results.setSuccess(true);
+    results.setContext(this->thisCap());
+    return newPredictRequest(callback, token).send();
   });
 }
 
@@ -111,11 +112,6 @@ kj::Promise<bool> ContextServer::feedTokensInternal(proto::Tokens::Client tokens
   });
 }
 
-kj::Promise<void> ContextServer::predictInternal(proto::Context::PredictCallback::Client callback,
-                                                 proto::PredictOption::Reader option) {
-  auto token = context_.Predict(option);
-  return newPredictRequest(callback, token).send();
-}
 
 kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::PredictCallback::Client callback,
                                                          proto::EvalOption::Reader eval_option,
