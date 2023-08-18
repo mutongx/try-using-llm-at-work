@@ -46,7 +46,7 @@ add_executable(play
         play.cpp
 )
 
-target_link_libraries(play capnp capnp-json fmt llama)
+target_link_libraries(play capnp capnp-json capnp-rpc fmt llama)
 target_include_directories(play PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(service
