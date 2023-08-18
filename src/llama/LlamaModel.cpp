@@ -34,6 +34,19 @@ LlamaModel::Vocabulary LlamaModel::GetVocabulary() const {
   return result;
 }
 
+char const *LlamaModel::GetTokenString(llama_token token) const {
+  return llama_token_to_str_with_model(model_, token);
+}
+
+llama_token LlamaModel::GetBos() const {
+  return llama_token_bos();
+}
+
+llama_token LlamaModel::GetEos() const {
+  return llama_token_eos();
+}
+
+
 LlamaModel::~LlamaModel() {
   if (model_ != nullptr) {
     llama_free_model(model_);
