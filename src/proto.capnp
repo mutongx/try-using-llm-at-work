@@ -77,7 +77,7 @@ interface Context {
   predict @6 (callback :PredictCallback, option :PredictOption) -> (success :Bool, context :Context);
   predictUntilEos @7 (callback :PredictCallback, evalOption :EvalOption, predictOption :PredictOption) -> (success :Bool, context :Context);
   interface PredictCallback {
-    callback @0 (token :Token) -> stream;
+    callback @0 (token :Token) -> ();
     done @1 ();
   }
 }

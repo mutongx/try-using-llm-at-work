@@ -73,7 +73,7 @@ kj::Promise<void> ContextServer::predict(proto::Context::Server::PredictContext 
     auto token = context_.Predict(params.getOption());
     results.setSuccess(true);
     results.setContext(thisCap());
-    return newPredictRequest(callback, token).send();
+    return newPredictRequest(callback, token).send().ignoreResult();
   });
 }
 
@@ -112,7 +112,6 @@ kj::Promise<bool> ContextServer::feedTokensInternal(proto::Tokens::Client tokens
   });
 }
 
-
 kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::PredictCallback::Client callback,
                                                          proto::EvalOption::Reader eval_option,
                                                          proto::PredictOption::Reader predict_option) {
@@ -126,6 +125,7 @@ kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::Predict
   }
   return newPredictRequest(callback, token)
       .send()
+      .ignoreResult()
       .then([this,
              callback = kj::mv(callback),
              eval_option = kj::mv(eval_option),
@@ -134,8 +134,8 @@ kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::Predict
       });
 }
 
-capnp::StreamingRequest<proto::Context::PredictCallback::CallbackParams> ContextServer::newPredictRequest(
-    proto::Context::PredictCallback::Client& callback, llama_token token) {
+ContextServer::PredictRequest ContextServer::newPredictRequest(proto::Context::PredictCallback::Client& callback,
+                                                               llama_token token) {
   auto request = callback.callbackRequest();
   auto result = request.getToken();
   result.setId(token);

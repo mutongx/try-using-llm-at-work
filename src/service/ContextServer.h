@@ -32,8 +32,9 @@ class ContextServer : public proto::Context::Server {
                                             proto::EvalOption::Reader eval_option,
                                             proto::PredictOption::Reader predict_option);
 
-  capnp::StreamingRequest<proto::Context::PredictCallback::CallbackParams> newPredictRequest(
-      proto::Context::PredictCallback::Client& callback, llama_token token);
+  using PredictRequest =
+      capnp::Request<proto::Context::PredictCallback::CallbackParams, proto::Context::PredictCallback::CallbackResults>;
+  PredictRequest newPredictRequest(proto::Context::PredictCallback::Client& callback, llama_token token);
 
   LlamaModel& model_;
   LlamaContext context_;
