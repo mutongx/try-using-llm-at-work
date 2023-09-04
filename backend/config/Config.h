@@ -3,7 +3,7 @@
 
 #include "capnp/CapnpMessage.h"
 
-#include "proto.capnp.h"
+#include "config.capnp.h"
 
 namespace muton::playground::llm {
 

@@ -3,7 +3,7 @@
 
 #include <llama.h>
 
-#include "proto.capnp.h"
+#include "common.capnp.h"
 
 namespace muton::playground::llm {
 

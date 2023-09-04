@@ -6,7 +6,7 @@
 #include "llama/LlamaParams.h"
 #include "llama/LlamaScope.h"
 
-#include "proto.capnp.h"
+#include "service.capnp.h"
 
 namespace muton::playground::llm {
 

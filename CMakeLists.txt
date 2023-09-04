@@ -14,4 +14,5 @@ add_subdirectory(thirdparty/capnproto)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/llama.cpp)
 
-add_subdirectory(src)
+add_subdirectory(proto)
+add_subdirectory(backend)

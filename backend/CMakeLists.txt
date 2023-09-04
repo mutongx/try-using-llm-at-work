@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 
-capnp_generate_cpp(CAPNP_PROTO_SRCS CAPNP_PROTO_HDRS proto.capnp)
-
 set(CAPNP_WRAPPER_HDRS
         capnp/CapnpMessage.h
         capnp/CapnpUtilities.h)
@@ -38,25 +36,13 @@ set(SERVICE_HDRS
         service/ContextServer.h
         service/TokenizerServer.h)
 
-add_executable(play
-        ${CAPNP_PROTO_SRCS} ${CAPNP_PROTO_HDRs}
+add_executable(backend
         ${CAPNP_WRAPPER_HDRS}
-        ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
-        ${CONFIG_SRCS} ${CONFIG_HDRS}
-        play.cpp
-)
-
-target_link_libraries(play capnp capnp-json capnp-rpc fmt llama)
-target_include_directories(play PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
-add_executable(service
-        ${CAPNP_WRAPPER_HDRS}
-        ${CAPNP_PROTO_SRCS} ${CAPNP_PROTO_HDRs}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
         ${CONFIG_SRCS} ${CONFIG_HDRS}
         ${SERVICE_HDRS} ${SERVICE_SRCS}
-        service.cpp
+        main.cpp
 )
 
-target_link_libraries(service capnp capnp-json capnp-rpc fmt llama)
-target_include_directories(service PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(backend proto fmt llama)
+target_include_directories(backend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
