@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "try-using-llm-at-work"
+version = "0.1.0"
+description = ""
+authors = ["Mut Ze <mutongsoft@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pycapnp = "^1.3.0"
+aiohttp = "^3.8.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
