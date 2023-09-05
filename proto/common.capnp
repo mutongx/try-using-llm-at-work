@@ -8,7 +8,6 @@ struct LlamaParams {
   contextLength @0 :UInt32;
   batchSize @1 :UInt32;
   gpuLayers @2 :UInt32;
-  groupedQueryAttention @3 :UInt32;
 }
 
 struct EvalOption {
