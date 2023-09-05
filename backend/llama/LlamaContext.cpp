@@ -29,12 +29,12 @@ void LlamaContext::MoveFrom(LlamaContext&& another) noexcept {
 }
 
 bool LlamaContext::FeedBos() {
-  auto bos = llama_token_bos();
+  auto bos = llama_token_bos(context_);
   return Feed(std::span<llama_token>(&bos, 1));
 }
 
 bool LlamaContext::FeedEos() {
-  auto eos = llama_token_eos();
+  auto eos = llama_token_eos(context_);
   return Feed(std::span<llama_token>(&eos, 1));
 }
 
