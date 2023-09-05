@@ -13,6 +13,7 @@ set(LLAMA_BUILD_EXAMPLES ON)
 add_subdirectory(thirdparty/capnproto)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/llama.cpp)
+add_subdirectory(thirdparty/catch2)
 
 add_subdirectory(proto)
 add_subdirectory(backend)
