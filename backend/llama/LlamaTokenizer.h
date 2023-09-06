@@ -54,7 +54,7 @@ class LlamaTokenizer {
                     SentencePieceIndex left,
                     SentencePieceIndex right);
 
-  std::vector<std::string> strings_;
+  std::vector<std::string> pieces_;
   std::vector<float> scores_;
   std::unordered_map<std::string_view, llama_token> mapping_;
 };

@@ -8,12 +8,10 @@ std::array<size_t, 16> LlamaTokenizer::Utf8SymbolSizeLookupTable = {1, 1, 1, 1, 
 
 LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) {
   auto vocabulary = model.GetVocabulary();
-  strings_.resize(vocabulary.size);
-  scores_.resize(vocabulary.size);
-  std::copy(vocabulary.strings.begin(), vocabulary.strings.end(), strings_.begin());
-  std::copy(vocabulary.scores.begin(), vocabulary.scores.end(), scores_.begin());
-  for (int i = 0; i < strings_.size(); ++i) {
-    mapping_[strings_[i]] = i;
+  pieces_ = std::move(vocabulary.pieces);
+  scores_ = std::move(vocabulary.scores);
+  for (int i = 0; i < pieces_.size(); ++i) {
+    mapping_[pieces_[i]] = i;
   }
 }
 
