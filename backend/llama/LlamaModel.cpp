@@ -72,6 +72,14 @@ LlamaModel::Vocabulary LlamaModel::GetVocabulary() const {
   return result;
 }
 
+std::string LlamaModel::GetTokenPiece(llama_token token) const {
+  std::string result;
+  auto piece_size = -llama_token_to_piece_with_model(model_, token, nullptr, 0);
+  result.resize(piece_size);
+  llama_token_to_piece_with_model(model_, token, result.data(), piece_size);
+  return result;
+}
+
 char const *LlamaModel::GetTokenText(llama_token token) const {
   fake_llama_context fake_context(model_);
   return llama_token_get_text(fake_context, token);
