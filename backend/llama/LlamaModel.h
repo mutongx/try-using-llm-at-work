@@ -24,8 +24,9 @@ class LlamaModel {
 
   struct Vocabulary {
     size_t size{};
-    std::vector<char const*> strings;
+    std::vector<std::string> pieces;
     std::vector<float> scores;
+    std::vector<char const*> texts;
   };
   [[nodiscard]] Vocabulary GetVocabulary() const;
 

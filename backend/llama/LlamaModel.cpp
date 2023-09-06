@@ -59,11 +59,15 @@ LlamaModel::Vocabulary LlamaModel::GetVocabulary() const {
   fake_llama_context fake_context(model_);
   Vocabulary result;
   result.size = llama_model_n_vocab(model_);
-  result.strings.resize(result.size);
+  result.pieces.resize(result.size);
+  result.texts.resize(result.size);
   result.scores.resize(result.size);
   for (llama_token token{0}; token < result.size; ++token) {
-    result.strings[token] = llama_token_get_text(fake_context, token);
+    auto piece_size = -llama_token_to_piece_with_model(model_, token, nullptr, 0);
+    result.pieces[token].resize(piece_size);
+    llama_token_to_piece_with_model(model_, token, result.pieces[token].data(), piece_size);
     result.scores[token] = llama_token_get_score(fake_context, token);
+    result.texts[token] = llama_token_get_text(fake_context, token);
   }
   return result;
 }
