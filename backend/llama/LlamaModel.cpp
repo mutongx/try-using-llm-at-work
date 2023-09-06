@@ -72,7 +72,7 @@ LlamaModel::Vocabulary LlamaModel::GetVocabulary() const {
   return result;
 }
 
-char const *LlamaModel::GetTokenString(llama_token token) const {
+char const *LlamaModel::GetTokenText(llama_token token) const {
   fake_llama_context fake_context(model_);
   return llama_token_get_text(fake_context, token);
 }

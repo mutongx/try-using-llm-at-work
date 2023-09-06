@@ -30,7 +30,7 @@ class LlamaModel {
   };
   [[nodiscard]] Vocabulary GetVocabulary() const;
 
-  [[nodiscard]] char const* GetTokenString(llama_token token) const;
+  [[nodiscard]] char const* GetTokenText(llama_token token) const;
   [[nodiscard]] llama_token GetBos() const;
   [[nodiscard]] llama_token GetEos() const;
 

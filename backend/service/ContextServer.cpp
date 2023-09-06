@@ -146,7 +146,7 @@ ContextServer::PredictRequest ContextServer::newPredictRequest(proto::Context::P
   } else {
     result.setType(proto::Token::TokenType::NORMAL);
   }
-  result.setStr(model_.GetTokenString(token));
+  result.setStr(model_.GetTokenText(token));
   return request;
 }
 
