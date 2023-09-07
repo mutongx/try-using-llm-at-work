@@ -51,7 +51,6 @@ TEST_CASE("The model tokenizes a string correctly", "[llama][tokenizer]") {
     REQUIRE(model.GetTokenPiece(result.token_id[3]) == "样");
     REQUIRE(result.token_pos[3] == strlen("像風一"));
   }
-
   SECTION("The model tokenizes an empty string correctly") {
     auto result = tokenizer.Tokenize("");
     // The result has 0 token.
