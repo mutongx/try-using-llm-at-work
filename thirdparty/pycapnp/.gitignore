@@ -1,0 +1,54 @@
+*.py[cod]
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+build32
+build64
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# IntelliJ
+.idea/
+
+# Cpp files
+capnp/*.cpp
+
+capnp/version.py
+MANIFEST
+docs/_build
+
+capnp/lib/capnp.cpp
+capnp/lib/capnp.h
+bundled/
+example
+*.iml
+
+# capnp files
+*.capnp
