@@ -11,4 +11,6 @@ struct Config {
   params @1 :Common.LlamaParams;
   eval @2 :Common.EvalOption;
   predict @3 :Common.PredictOption;
+  bind @4 :Text;
+  connect @5 :Text;
 }
