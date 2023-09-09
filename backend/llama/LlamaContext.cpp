@@ -92,6 +92,11 @@ llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
                                                 repeat_penalty_size,
                                                 option.getAlphaFrequency(),
                                                 option.getAlphaPresence());
+
+  if (option.getTemperature() <= 0) {
+    return llama_sample_token_greedy(context_, &candidates_p);
+  }
+
   llama_sample_top_k(context_, &candidates_p, static_cast<int>(option.getTopK()), 1);
   llama_sample_tail_free(context_, &candidates_p, option.getTailFreeZ(), 1);
   llama_sample_typical(context_, &candidates_p, option.getTypicalP(), 1);
