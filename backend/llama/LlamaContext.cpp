@@ -73,7 +73,9 @@ llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
   auto vocab_size = llama_n_vocab(context_);
   std::vector<llama_token_data> candidates(vocab_size);
   for (llama_token token_id = 0; token_id < vocab_size; ++token_id) {
-    candidates.emplace_back(llama_token_data{token_id, logits[token_id], 0.0F});
+    candidates[token_id].id = token_id;
+    candidates[token_id].logit = logits[token_id];
+    candidates[token_id].p = 0.0F;
   }
   llama_token_data_array candidates_p = {candidates.data(), candidates.size(), false};
 
