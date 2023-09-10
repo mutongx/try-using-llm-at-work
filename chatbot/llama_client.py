@@ -10,7 +10,7 @@ class PredictCallback(Context.PredictCallback.Server):
         self._queue = asyncio.Queue()
 
     async def callback(self, token, _context):
-        return await self._queue.put(token)
+        return await self._queue.put(token.as_builder())
 
     async def done(self, _context):
         return await self._queue.put(None)
@@ -40,19 +40,29 @@ class LlamaClientWrapper:
         model = self._app.getModel().model
         tokens = model.newTokenizer().tokenizer.tokenize(prompt).tokens
         callback = PredictCallback()
-        prediction = model.newContext().context \
-            .feedTokens(tokens=tokens).context \
-            .predictUntilEos(callback=callback, evalOption=eval_option, predictOption=predict_option).a_wait()
 
+        predict = asyncio.create_task(
+            model.newContext().context
+            .feedTokens(tokens=tokens).context
+            .predictUntilEos(callback=callback, evalOption=eval_option,
+                             predictOption=predict_option).a_wait(), name="predict")
+        receive = asyncio.create_task(callback.get(), name="receive")
+
+        pending = {predict, receive}
         first = True
-        while True:
-            item = await callback.get()
-            if item is None:
-                break
-            s = item.str
-            if first:
-                s = s.removeprefix(" ")
-                first = False
-            yield s
-
-        await prediction
+        while pending:
+            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            if receive in done:
+                item = await receive
+                if item is not None:
+                    s = item.str
+                    if first:
+                        s = s.removeprefix(" ")
+                        first = False
+                    yield s
+                    receive = asyncio.create_task(callback.get())
+                    pending.add(receive)
+                else:
+                    pass
+            if predict in done:
+                await predict
