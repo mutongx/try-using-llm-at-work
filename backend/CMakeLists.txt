@@ -50,7 +50,8 @@ target_include_directories(backend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(TEST_SRCS
         llama/LlamaModel_test.cpp
-        llama/LlamaTokenizer_test.cpp)
+        llama/LlamaTokenizer_test.cpp
+        llama/LlamaContext_test.cpp)
 
 add_executable(backend_test
         ${CAPNP_WRAPPER_HDRS}
