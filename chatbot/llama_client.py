@@ -55,7 +55,7 @@ class LlamaClientWrapper:
             if receive in done:
                 item = await receive
                 if item is not None:
-                    s = item.str
+                    s = item.str  # type: str
                     if first:
                         s = s.removeprefix(" ")
                         first = False
