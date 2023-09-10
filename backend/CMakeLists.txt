@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+configure_file(../thirdparty/llama.cpp/ggml-metal.metal ggml-metal.metal COPYONLY)
+
 set(CAPNP_WRAPPER_HDRS
         capnp/CapnpMessage.h
         capnp/CapnpUtilities.h)
