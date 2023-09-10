@@ -3,9 +3,21 @@
 namespace muton::playground::llm {
 
 LlamaParams::LlamaParams(proto::LlamaParams::Reader params) : params_(llama_context_default_params()) {
-  params_.n_ctx = static_cast<int>(params.getContextLength());
-  params_.n_batch = static_cast<int>(params.getBatchSize());
-  params_.n_gpu_layers = static_cast<int>(params.getGpuLayers());
+  if (params.getContextLength() != 0) {
+    params_.n_ctx = static_cast<int>(params.getContextLength());
+  }
+  if (params.getBatchSize() != 0) {
+    params_.n_batch = static_cast<int>(params.getBatchSize());
+  }
+  if (params.getGpuLayers() != 0) {
+    params_.n_gpu_layers = static_cast<int>(params.getGpuLayers());
+  }
+  if (params.getRopeFreqBase() != 0.0) {
+    params_.rope_freq_base = params.getRopeFreqBase();
+  }
+  if (params.getRopeFreqScale() != 0.0) {
+    params_.rope_freq_scale = params.getRopeFreqScale();
+  }
 }
 
 llama_context_params LlamaParams::Get() const {
