@@ -8,6 +8,8 @@ struct LlamaParams {
   contextLength @0 :UInt32;
   batchSize @1 :UInt32;
   gpuLayers @2 :UInt32;
+  ropeFreqBase @3 :Float32;
+  ropeFreqScale @4 :Float32;
 }
 
 struct EvalOption {
