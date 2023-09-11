@@ -6,6 +6,18 @@ $Cxx.namespace("muton::playground::llm::proto");
 
 using Common = import "common.capnp";
 
+struct JenkinsConfig {
+  url @0 :Text;
+  login @1 :Text;
+  password @2 :Text;
+}
+
+struct GitHubConfig {
+  url @0 :Text;
+  login @1 :Text;
+  password @2 :Text;
+}
+
 struct Config {
   model @0 :Text;
   params @1 :Common.LlamaParams;
@@ -13,4 +25,6 @@ struct Config {
   predict @3 :Common.PredictOption;
   bind @4 :Text;
   connect @5 :Text;
+  jenkins @6 :JenkinsConfig;
+  github @7 :GitHubConfig;
 }
