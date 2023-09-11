@@ -28,9 +28,9 @@ class LlamaClientWrapper:
 
     async def __aenter__(self):
         host, port = self._addr.split(":")
-        conn = await capnp.AsyncIoStream.create_connection(host=host, port=port)
+        conn = await capnp.AsyncIoStream.create_connection(host=host, port=int(port))
         self._client = capnp.TwoPartyClient(conn)
-        self._app = self._client.bootstrap().cast_as(App.Server)
+        self._app = self._client.bootstrap().cast_as(App)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
