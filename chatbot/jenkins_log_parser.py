@@ -30,6 +30,7 @@ class JenkinsLogParser:
                 self._items[-1].lines.append(LogLine(timestamp=None, text=line))
 
     def finalize(self):
+        # This won't work correctly for pipelines with parallel stages
         if self._finalized:
             return
         stack = [self._items[0]]

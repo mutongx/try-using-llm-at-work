@@ -14,9 +14,9 @@ class JenkinsClientWrapper:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self._session.close()
 
-    async def fetch_logs(self, job: str, build: str):
+    async def fetch_logs(self, job: str, run: str):
         job = "".join("/job/" + s for s in job.split("/"))
-        async with self._session.get(f"{self._url}/{job}/{build}/logText/progressiveText", params={"start": 0}) as resp:
+        async with self._session.get(f"{self._url}/{job}/{run}/logText/progressiveText", params={"start": 0}) as resp:
             resp.raise_for_status()
             while not resp.content.at_eof():
                 yield (await resp.content.readline()).strip(b"\r\n")
