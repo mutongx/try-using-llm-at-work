@@ -43,6 +43,7 @@ class LlamaClientWrapper:
 
         predict = asyncio.create_task(
             model.newContext().context
+            .feedBos().context
             .feedTokens(tokens=tokens).context
             .predictUntilEos(callback=callback, evalOption=eval_option,
                              predictOption=predict_option).a_wait(), name="predict")
