@@ -93,10 +93,11 @@
 #  define FMT_NO_UNIQUE_ADDRESS
 #endif
 
-#if FMT_GCC_VERSION || defined(__clang__)
-#  define FMT_VISIBILITY(value) __attribute__((visibility(value)))
+// Visibility when compiled as a shared library/object.
+#if defined(FMT_LIB_EXPORT) || defined(FMT_SHARED)
+#  define FMT_SO_VISIBILITY(value) FMT_VISIBILITY(value)
 #else
-#  define FMT_VISIBILITY(value)
+#  define FMT_SO_VISIBILITY(value)
 #endif
 
 #ifdef __has_builtin
@@ -152,7 +153,10 @@ FMT_END_NAMESPACE
 
 #ifndef FMT_USE_USER_DEFINED_LITERALS
 // EDG based compilers (Intel, NVIDIA, Elbrus, etc), GCC and MSVC support UDLs.
-#  if (FMT_HAS_FEATURE(cxx_user_literals) || FMT_GCC_VERSION >= 407 || \
+//
+// GCC before 4.9 requires a space in `operator"" _a` which is invalid in later
+// compiler versions.
+#  if (FMT_HAS_FEATURE(cxx_user_literals) || FMT_GCC_VERSION >= 409 || \
        FMT_MSC_VERSION >= 1900) &&                                     \
       (!defined(__EDG_VERSION__) || __EDG_VERSION__ >= /* UDL feature */ 480)
 #    define FMT_USE_USER_DEFINED_LITERALS 1
@@ -1046,7 +1050,7 @@ FMT_BEGIN_EXPORT
 #endif
 
 /** An error reported from a formatting function. */
-class FMT_VISIBILITY("default") format_error : public std::runtime_error {
+class FMT_SO_VISIBILITY("default") format_error : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 };
@@ -1736,28 +1740,6 @@ FMT_CONSTEXPR inline fp operator*(fp x, fp y) {
   return {multiply(x.f, y.f), x.e + y.e + 64};
 }
 
-template <typename T = void> struct basic_data {
-  // For checking rounding thresholds.
-  // The kth entry is chosen to be the smallest integer such that the
-  // upper 32-bits of 10^(k+1) times it is strictly bigger than 5 * 10^k.
-  static constexpr uint32_t fractional_part_rounding_thresholds[8] = {
-      2576980378U,  // ceil(2^31 + 2^32/10^1)
-      2190433321U,  // ceil(2^31 + 2^32/10^2)
-      2151778616U,  // ceil(2^31 + 2^32/10^3)
-      2147913145U,  // ceil(2^31 + 2^32/10^4)
-      2147526598U,  // ceil(2^31 + 2^32/10^5)
-      2147487943U,  // ceil(2^31 + 2^32/10^6)
-      2147484078U,  // ceil(2^31 + 2^32/10^7)
-      2147483691U   // ceil(2^31 + 2^32/10^8)
-  };
-};
-// This is a struct rather than an alias to avoid shadowing warnings in gcc.
-struct data : basic_data<> {};
-
-#if FMT_CPLUSPLUS < 201703L
-template <typename T>
-constexpr uint32_t basic_data<T>::fractional_part_rounding_thresholds[];
-#endif
 
 template <typename T, bool doublish = num_bits<T>() == num_bits<double>()>
 using convert_float_result =
@@ -3029,7 +3011,7 @@ class bigint {
     bigits_.resize(to_unsigned(num_bigits + exp_difference));
     for (int i = num_bigits - 1, j = i + exp_difference; i >= 0; --i, --j)
       bigits_[j] = bigits_[i];
-    std::uninitialized_fill_n(bigits_.data(), exp_difference, 0);
+    std::uninitialized_fill_n(bigits_.data(), exp_difference, 0u);
     exp_ -= exp_difference;
   }
 
@@ -3276,9 +3258,27 @@ FMT_CONSTEXPR20 void format_hexfloat(Float value, int precision,
   format_hexfloat(static_cast<double>(value), precision, specs, buf);
 }
 
+FMT_CONSTEXPR inline uint32_t fractional_part_rounding_thresholds(int index) {
+  // For checking rounding thresholds.
+  // The kth entry is chosen to be the smallest integer such that the
+  // upper 32-bits of 10^(k+1) times it is strictly bigger than 5 * 10^k.
+  constexpr uint32_t thresholds[8] = {
+      2576980378U,  // ceil(2^31 + 2^32/10^1)
+      2190433321U,  // ceil(2^31 + 2^32/10^2)
+      2151778616U,  // ceil(2^31 + 2^32/10^3)
+      2147913145U,  // ceil(2^31 + 2^32/10^4)
+      2147526598U,  // ceil(2^31 + 2^32/10^5)
+      2147487943U,  // ceil(2^31 + 2^32/10^6)
+      2147484078U,  // ceil(2^31 + 2^32/10^7)
+      2147483691U   // ceil(2^31 + 2^32/10^8)
+  };
+  return thresholds[index];
+}
+
 template <typename Float>
 FMT_CONSTEXPR20 auto format_float(Float value, int precision, float_specs specs,
                                   buffer<char>& buf) -> int {
+  
   // float is passed as double to reduce the number of instantiations.
   static_assert(!std::is_same<Float, float>::value, "");
   FMT_ASSERT(value >= 0, "value is negative");
@@ -3481,8 +3481,8 @@ FMT_CONSTEXPR20 auto format_float(Float value, int precision, float_specs specs,
           if (precision < 9) {
             uint32_t fractional_part = static_cast<uint32_t>(prod);
             should_round_up = fractional_part >=
-                                  data::fractional_part_rounding_thresholds
-                                      [8 - number_of_digits_to_print] ||
+                                  fractional_part_rounding_thresholds
+                                      (8 - number_of_digits_to_print) ||
                               ((fractional_part >> 31) &
                                ((digits & 1) | (second_third_subsegments != 0) |
                                 has_more_segments)) != 0;
@@ -3521,8 +3521,8 @@ FMT_CONSTEXPR20 auto format_float(Float value, int precision, float_specs specs,
             // consisting of a genuine digit from the input.
             uint32_t fractional_part = static_cast<uint32_t>(prod);
             should_round_up = fractional_part >=
-                                  data::fractional_part_rounding_thresholds
-                                      [8 - number_of_digits_to_print] ||
+                                  fractional_part_rounding_thresholds
+                                      (8 - number_of_digits_to_print) ||
                               ((fractional_part >> 31) &
                                ((digits & 1) | (third_subsegment != 0) |
                                 has_more_segments)) != 0;
@@ -4218,11 +4218,33 @@ struct formatter<nested_view<T>> {
 template <typename T>
 struct nested_formatter {
  private:
+  int width_;
+  detail::fill_t<char> fill_;
+  align_t align_ : 4;
   formatter<T> formatter_;
- 
+
  public:
   FMT_CONSTEXPR auto parse(format_parse_context& ctx) -> const char* {
+    auto specs = detail::dynamic_format_specs<char>();
+    auto it = parse_format_specs(
+      ctx.begin(), ctx.end(), specs, ctx, detail::type::none_type);
+    width_ = specs.width;
+    fill_ = specs.fill;
+    align_ = specs.align;
+    ctx.advance_to(it);
     return formatter_.parse(ctx);
+  }
+
+  template <typename F>
+  auto write_padded(format_context& ctx, F write) const -> decltype(ctx.out()) {
+    if (width_ == 0) return write(ctx.out());
+    auto buf = memory_buffer();
+    write(std::back_inserter(buf));
+    auto specs = format_specs<>();
+    specs.width = width_;
+    specs.fill = fill_;
+    specs.align = align_;
+    return detail::write(ctx.out(), string_view(buf.data(), buf.size()), specs);
   }
 
   auto nested(const T& value) const -> nested_view<T> {
@@ -4458,7 +4480,7 @@ template <detail_exported::fixed_string Str> constexpr auto operator""_a() {
   return detail::udl_arg<char_t, sizeof(Str.data) / sizeof(char_t), Str>();
 }
 #  else
-constexpr auto operator"" _a(const char* s, size_t) -> detail::udl_arg<char> {
+constexpr auto operator""_a(const char* s, size_t) -> detail::udl_arg<char> {
   return {s};
 }
 #  endif
