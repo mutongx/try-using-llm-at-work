@@ -2,14 +2,14 @@ import asyncio
 import capnp
 
 from proto.common_capnp import EvalOption, PredictOption
-from proto.service_capnp import Context, App
+from proto.service_capnp import App, Context, Token
 
 
 class PredictCallback(Context.PredictCallback.Server):
     def __init__(self):
-        self._queue = asyncio.Queue()
+        self._queue: asyncio.Queue[Token | None] = asyncio.Queue()
 
-    async def callback(self, token, _context):
+    async def callback(self, token: Token, _context):
         return await self._queue.put(token.as_builder())
 
     async def done(self, _context):
@@ -23,8 +23,6 @@ class LlamaClientWrapper:
 
     def __init__(self, addr: str):
         self._addr = addr
-        self._client = None
-        self._app = None
 
     async def __aenter__(self):
         host, port = self._addr.split(":")
