@@ -118,7 +118,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     add_custom_command(
         OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/build-info.h"
         COMMENT "Generating build details from Git"
-        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-info.cmake"
+        COMMAND ${CMAKE_COMMAND} -DMSVC=${MSVC} -DCMAKE_C_COMPILER_VERSION=${CMAKE_C_COMPILER_VERSION} -DCMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID} -DCMAKE_VS_PLATFORM_NAME=${CMAKE_VS_PLATFORM_NAME} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-info.cmake"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS "${GIT_DIR}/index"
         VERBATIM
@@ -162,6 +162,8 @@ if (APPLE AND LLAMA_ACCELERATE)
         message(STATUS "Accelerate framework found")
 
         add_compile_definitions(GGML_USE_ACCELERATE)
+        add_compile_definitions(ACCELERATE_NEW_LAPACK)
+        add_compile_definitions(ACCELERATE_LAPACK_ILP64)
         set(LLAMA_EXTRA_LIBS ${LLAMA_EXTRA_LIBS} ${ACCELERATE_FRAMEWORK})
     else()
         message(WARNING "Accelerate framework not found")
@@ -341,8 +343,9 @@ if (LLAMA_MPI)
         set(GGML_SOURCES_MPI ggml-mpi.c ggml-mpi.h)
         add_compile_definitions(GGML_USE_MPI)
         add_compile_definitions(${MPI_C_COMPILE_DEFINITIONS})
-        set(cxx_flags ${cxx_flags} -Wno-cast-qual)
-        set(c_flags   ${c_flags}   -Wno-cast-qual)
+        if (NOT MSVC)
+            add_compile_options(-Wno-cast-qual)
+        endif()
         set(LLAMA_EXTRA_LIBS     ${LLAMA_EXTRA_LIBS}     ${MPI_C_LIBRARIES})
         set(LLAMA_EXTRA_INCLUDES ${LLAMA_EXTRA_INCLUDES} ${MPI_C_INCLUDE_DIRS})
         # Even if you're only using the C header, C++ programs may bring in MPI
@@ -412,42 +415,55 @@ endif()
 
 if (LLAMA_ALL_WARNINGS)
     if (NOT MSVC)
-        set(c_flags
-            -Wall
-            -Wextra
-            -Wpedantic
-            -Wcast-qual
-            -Wdouble-promotion
-            -Wshadow
-            -Wstrict-prototypes
-            -Wpointer-arith
-            -Wmissing-prototypes
-            -Werror=implicit-int
-            -Wno-unused-function
-        )
-        set(cxx_flags
-            -Wall
-            -Wextra
-            -Wpedantic
-            -Wcast-qual
-            -Wmissing-declarations
-            -Wno-unused-function
-            -Wno-multichar
-        )
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            # g++ only
-            set(cxx_flags ${cxx_flags} -Wno-format-truncation -Wno-array-bounds)
+        set(warning_flags -Wall -Wextra -Wpedantic -Wcast-qual -Wno-unused-function)
+        set(c_flags -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int
+            -Werror=implicit-function-declaration)
+        set(cxx_flags -Wmissing-declarations -Wmissing-noreturn)
+        set(host_cxx_flags "")
+
+        if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+            set(warning_flags ${warning_flags} -Wunreachable-code-break -Wunreachable-code-return)
+            set(host_cxx_flags ${host_cxx_flags} -Wmissing-prototypes -Wextra-semi)
+
+            if (
+                (CMAKE_C_COMPILER_ID STREQUAL "Clang"      AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 3.8.0) OR
+                (CMAKE_C_COMPILER_ID STREQUAL "AppleClang" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 7.3.0)
+            )
+                set(c_flags ${c_flags} -Wdouble-promotion)
+            endif()
+        elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            set(c_flags ${c_flags} -Wdouble-promotion)
+            set(host_cxx_flags ${host_cxx_flags} -Wno-array-bounds)
+
+            if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7.1.0)
+                set(host_cxx_flags ${host_cxx_flags} -Wno-format-truncation)
+            endif()
+            if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.1.0)
+                set(host_cxx_flags ${host_cxx_flags} -Wextra-semi)
+            endif()
         endif()
     else()
         # todo : msvc
     endif()
 
-    add_compile_options(
-            "$<$<COMPILE_LANGUAGE:C>:${c_flags}>"
-            "$<$<COMPILE_LANGUAGE:CXX>:${cxx_flags}>"
-    )
+    set(c_flags   ${c_flags}   ${warning_flags})
+    set(cxx_flags ${cxx_flags} ${warning_flags})
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:${c_flags}>"
+                        "$<$<COMPILE_LANGUAGE:CXX>:${cxx_flags} ${host_cxx_flags}>")
 
 endif()
+
+if (NOT MSVC)
+    set(cuda_flags -Wno-pedantic)
+endif()
+set(cuda_flags ${cxx_flags} -use_fast_math ${cuda_flags})
+
+list(JOIN host_cxx_flags " " cuda_host_flags)  # pass host compiler flags as a single argument
+if (NOT cuda_host_flags STREQUAL "")
+    set(cuda_flags ${cuda_flags} -Xcompiler ${cuda_host_flags})
+endif()
+
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:${cuda_flags}>")
 
 if (WIN32)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
@@ -702,6 +718,7 @@ set(LLAMA_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR}
 set(LLAMA_BUILD_NUMBER ${BUILD_NUMBER})
 set(LLAMA_BUILD_COMMIT ${BUILD_COMMIT})
 set(LLAMA_INSTALL_VERSION 0.0.${BUILD_NUMBER})
+get_directory_property(LLAMA_TRANSIENT_DEFINES COMPILE_DEFINITIONS)
 
 configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/scripts/LlamaConfig.cmake.in
