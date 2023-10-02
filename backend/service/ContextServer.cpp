@@ -139,13 +139,6 @@ ContextServer::PredictRequest ContextServer::newPredictRequest(proto::Context::P
   auto request = callback.callbackRequest();
   auto result = request.getToken();
   result.setId(token);
-  if (token == model_.GetBos()) {
-    result.setType(proto::Token::TokenType::BEGIN_OF_STREAM);
-  } else if (token == model_.GetEos()) {
-    result.setType(proto::Token::TokenType::END_OF_STREAM);
-  } else {
-    result.setType(proto::Token::TokenType::NORMAL);
-  }
   result.setStr(model_.GetTokenPiece(token));
   return request;
 }

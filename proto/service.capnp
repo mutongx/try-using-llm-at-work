@@ -7,14 +7,8 @@ $Cxx.namespace("muton::playground::llm::proto");
 using Common = import "common.capnp";
 
 struct Token {
-  enum TokenType {
-    normal @0;
-    beginOfStream @1;
-    endOfStream @2;
-  }
   id @0 :Int32;
-  type @1 :TokenType;
-  str @2 :Text;
+  str @1 :Text;
 }
 
 interface App {
