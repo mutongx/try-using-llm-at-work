@@ -50,6 +50,22 @@ class LlamaClientWrapper:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    async def tokenize(self, prompt: str) -> TokenizeResult:
+        model = self._app.getModel().model
+        tokens = model.newTokenizer().tokenizer.tokenize(prompt).tokens
+        size, token_id, token_pos, token_size = await asyncio.gather(
+            tokens.getSize().a_wait(),
+            tokens.getTokenId().a_wait(),
+            tokens.getTokenPos().a_wait(),
+            tokens.getTokenSize().a_wait(),
+        )
+        return TokenizeResult(
+            size=size.to_dict()["result"],
+            token_id=token_id.to_dict()["result"],
+            token_pos=token_pos.to_dict()["result"],
+            token_size=token_size.to_dict()["result"]
+        )
+
     async def run_completion(self, prompt: str, eval_option: EvalOption, predict_option: PredictOption):
         model = self._app.getModel().model
         tokens = model.newTokenizer().tokenizer.tokenize(prompt).tokens
