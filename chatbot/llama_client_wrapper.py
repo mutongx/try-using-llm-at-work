@@ -1,8 +1,24 @@
 import asyncio
 import capnp
+from dataclasses import dataclass
+from typing import List
 
 from proto.common_capnp import EvalOption, PredictOption
 from proto.service_capnp import App, Context, Token
+
+
+@dataclass
+class TokenizeResult:
+    size: int
+    token_id: List[int]
+    token_pos: List[int]
+    token_size: List[int]
+
+
+@dataclass
+class Token:
+    id: int
+    str: str
 
 
 class PredictCallback(Context.PredictCallback.Server):
