@@ -26,7 +26,7 @@ class PredictCallback(Context.PredictCallback.Server):
         self._queue: asyncio.Queue[Token | None] = asyncio.Queue()
 
     async def callback(self, token: Token, _context):
-        return await self._queue.put(token.as_builder())
+        return await self._queue.put(Token(id=token.id, str=token.str))
 
     async def done(self, _context):
         return await self._queue.put(None)
