@@ -32,7 +32,7 @@ LlamaModel::LlamaModel(std::string const &path, const LlamaParams &params)
 }
 
 LlamaModel::LlamaModel(char const *path, const LlamaParams &params)
-    : model_(llama_load_model_from_file(path, params.Get())) {
+    : model_(llama_load_model_from_file(path, params.GetModelParams())) {
   if (model_ == nullptr) {
     throw std::runtime_error("failed to load model");
   }
