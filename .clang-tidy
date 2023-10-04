@@ -8,6 +8,9 @@ Checks: >
   -hicpp-no-array-decay,
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
+  -google-explicit-constructor,
+  -hicpp-explicit-conversions,
+  -llvm-header-guard,
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
