@@ -10,12 +10,12 @@ namespace muton::playground::llm {
 class LlamaParams {
  public:
   LlamaParams(proto::LlamaParams::Reader params);
-  llama_context_params Get() const;
-  llama_context_params const* operator->() const;
-  llama_context_params* operator->();
+  [[nodiscard]] llama_model_params const& GetModelParams() const;
+  [[nodiscard]] llama_context_params const& GetContextParams() const;
 
  private:
-  llama_context_params params_;
+  llama_model_params model_params_;
+  llama_context_params context_params_;
 };
 
 }  // namespace muton::playground::llm
