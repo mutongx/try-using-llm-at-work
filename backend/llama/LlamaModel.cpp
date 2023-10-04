@@ -3,8 +3,6 @@
 #include <random>
 #include <stdexcept>
 
-#include <llama.h>
-
 namespace muton::playground::llm {
 
 // This struct mimics the layout of llama.cpp's llama_context, as llama.cpp didn't provide any vocabulary-related APIs
