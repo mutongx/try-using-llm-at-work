@@ -58,8 +58,7 @@ bool LlamaContext::Eval(proto::EvalOption::Reader option) {
     if (llama_eval(context_,
                    tokens_.data() + tokens_eval_,
                    static_cast<int>(current_batch_size),
-                   static_cast<int>(tokens_eval_),
-                   static_cast<int>(option.getThreadCount())) != 0) {
+                   static_cast<int>(tokens_eval_)) != 0) {
       return false;
     }
     tokens_eval_ += current_batch_size;
@@ -70,7 +69,7 @@ bool LlamaContext::Eval(proto::EvalOption::Reader option) {
 
 llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
   auto* logits = llama_get_logits(context_);
-  auto vocab_size = llama_n_vocab(context_);
+  auto vocab_size = llama_n_vocab(llama_get_model(context_));
   std::vector<llama_token_data> candidates(vocab_size);
   for (llama_token token_id = 0; token_id < vocab_size; ++token_id) {
     candidates[token_id].id = token_id;
