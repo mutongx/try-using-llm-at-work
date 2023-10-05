@@ -7,6 +7,8 @@ namespace muton::playground::llm {
 LlamaContext::LlamaContext(LlamaParams const& params, LlamaModel const& model)
     : context_size_(params.GetContextParams().n_ctx),
       tokens_(context_size_, 0),
+      tokens_pos_(context_size_, 0),
+      tokens_seq_id_(context_size_, 0),
       context_(llama_new_context_with_model(model.Get(), params.GetContextParams())) {}
 
 LlamaContext::LlamaContext(LlamaContext&& another) noexcept {
@@ -47,24 +49,30 @@ bool LlamaContext::Feed(std::span<llama_token> tokens_pending) {
     return false;
   }
   memcpy(tokens_.data() + tokens_size_, tokens_pending.data(), tokens_pending.size() * sizeof(llama_token));
+  for (size_t i = 0; i < tokens_pending.size(); ++i) {
+    tokens_pos_[i + tokens_size_] = static_cast<llama_pos>(i + tokens_size_);
+  }
   tokens_size_ += tokens_pending.size();
   return true;
 }
 
-bool LlamaContext::Eval(proto::EvalOption::Reader option) {
-  size_t to_eval = tokens_size_ - tokens_eval_;
-  while (to_eval > 0) {
-    size_t current_batch_size = std::min(to_eval, static_cast<size_t>(option.getBatchSize()));
-    if (llama_eval(context_,
-                   tokens_.data() + tokens_eval_,
-                   static_cast<int>(current_batch_size),
-                   static_cast<int>(tokens_eval_)) != 0) {
-      return false;
+ssize_t LlamaContext::Eval(proto::EvalOption::Reader option) {
+  size_t to_eval = std::min(tokens_size_ - tokens_eval_, static_cast<size_t>(option.getBatchSize()));
+  if (to_eval > 0) {
+    llama_batch batch{
+        .n_tokens = static_cast<int32_t>(to_eval),
+        .token = tokens_.data() + tokens_eval_,
+        .embd = nullptr,
+        .pos = tokens_pos_.data() + tokens_eval_,
+        .seq_id = tokens_seq_id_.data() + tokens_eval_,
+        .logits = nullptr,
+    };
+    if (llama_decode(context_, batch) != 0) {
+      return -1;
     }
-    tokens_eval_ += current_batch_size;
-    to_eval -= current_batch_size;
   }
-  return true;
+  tokens_eval_ += to_eval;
+  return static_cast<ssize_t>(tokens_size_ - tokens_eval_);
 }
 
 llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
@@ -100,7 +108,7 @@ llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
   llama_sample_tail_free(context_, &candidates_p, option.getTailFreeZ(), 1);
   llama_sample_typical(context_, &candidates_p, option.getTypicalP(), 1);
   llama_sample_top_p(context_, &candidates_p, option.getTopP(), 1);
-  llama_sample_temperature(context_, &candidates_p, option.getTemperature());
+  llama_sample_temp(context_, &candidates_p, option.getTemperature());
   return llama_sample_token(context_, &candidates_p);
 }
 

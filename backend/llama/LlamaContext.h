@@ -29,7 +29,7 @@ class LlamaContext {
   bool FeedBos();
   bool FeedEos();
 
-  bool Eval(proto::EvalOption::Reader option);
+  ssize_t Eval(proto::EvalOption::Reader option);
   llama_token Predict(proto::PredictOption::Reader option);
 
  private:
@@ -37,7 +37,12 @@ class LlamaContext {
 
   size_t context_size_{};
 
+  // For data stored in llama_batch
   std::vector<llama_token> tokens_{};
+  std::vector<llama_pos> tokens_pos_{};
+  std::vector<llama_seq_id> tokens_seq_id_{};
+
+  // To track current feed / eval progress
   size_t tokens_begin_{};
   size_t tokens_size_{};
   size_t tokens_eval_{};
