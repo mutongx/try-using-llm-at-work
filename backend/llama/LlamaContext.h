@@ -24,13 +24,13 @@ class LlamaContext {
   LlamaContext& operator=(LlamaContext&& another) noexcept;
   ~LlamaContext();
 
-  bool Feed(llama_token token_pending);
-  bool Feed(std::span<llama_token> tokens_pending);
-  bool FeedBos();
-  bool FeedEos();
+  [[nodiscard]] bool Feed(llama_token token_pending);
+  [[nodiscard]] bool Feed(std::span<llama_token> tokens_pending);
+  [[nodiscard]] bool FeedBos();
+  [[nodiscard]] bool FeedEos();
 
-  ssize_t Eval(proto::EvalOption::Reader option);
-  llama_token Predict(proto::PredictOption::Reader option);
+  [[nodiscard]] ssize_t Eval(proto::EvalOption::Reader option);
+  [[nodiscard]] llama_token Predict(proto::PredictOption::Reader option);
 
  private:
   void MoveFrom(LlamaContext&& another) noexcept;
