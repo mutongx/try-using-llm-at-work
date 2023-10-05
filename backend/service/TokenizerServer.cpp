@@ -39,6 +39,6 @@ kj::Promise<void> TokenizerServer::tokenize(TokenizeContext context) {
   auto text_view = std::string_view(text.cStr(), text.size());
   context.getResults().setTokens(kj::heap<TokenizeResultServer>(tokenizer_.Tokenize(text_view)));
   return kj::READY_NOW;
-};
+}
 
 }  // namespace muton::playground::llm
