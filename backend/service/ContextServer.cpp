@@ -59,9 +59,10 @@ kj::Promise<void> ContextServer::eval(proto::Context::Server::EvalContext contex
   return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
     auto params = context.getParams();
     auto results = context.getResults();
-    auto success = context_.Eval(params.getOption());
-    results.setSuccess(success);
-    results.setContext(thisCap());
+    return evalInternal(params.getOption()).then([this, results](bool success) mutable {
+      results.setSuccess(success);
+      results.setContext(thisCap());
+    });
   });
 }
 
@@ -69,11 +70,10 @@ kj::Promise<void> ContextServer::predict(proto::Context::Server::PredictContext 
   return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
     auto params = context.getParams();
     auto results = context.getResults();
-    auto callback = params.getCallback();
-    auto token = context_.Predict(params.getOption());
-    results.setSuccess(true);
-    results.setContext(thisCap());
-    return newPredictRequest(callback, token).send().ignoreResult();
+    return predictInternal(params.getCallback(), params.getOption()).then([this, results]() mutable {
+      results.setSuccess(true);
+      results.setContext(thisCap());
+    });
   });
 }
 
@@ -112,30 +112,57 @@ kj::Promise<bool> ContextServer::feedTokensInternal(proto::Tokens::Client tokens
   });
 }
 
+kj::Promise<bool> ContextServer::evalInternal(proto::EvalOption::Reader eval_option) {
+  auto left = context_.Eval(eval_option);
+  if (left > 0) {
+    return kj::READY_NOW.operator kj::Promise<void>().then([this, eval_option = kj::mv(eval_option)]() {
+      return evalInternal(kj::mv(eval_option));
+    });
+  }
+  return left == 0;
+}
+
+kj::Promise<void> ContextServer::predictInternal(proto::Context::PredictCallback::Client callback,
+                                                 proto::PredictOption::Reader predict_option) {
+  // TODO: Add mirostat predict when ready
+  auto token = context_.Predict(predict_option);
+  return newPredictCallbackRequest(callback, token).send().ignoreResult();
+}
+
 kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::PredictCallback::Client callback,
                                                          proto::EvalOption::Reader eval_option,
                                                          proto::PredictOption::Reader predict_option) {
-  context_.Eval(eval_option);
-  auto token = context_.Predict(predict_option);
-  if (!context_.Feed(token)) {
-    return callback.doneRequest().send().ignoreResult();
+  kj::Promise<void> next_request{kj::READY_NOW};
+  bool next_iter{false};
+  // Runs eval.
+  auto left = context_.Eval(eval_option);
+  if (left > 0) {  // Eval() is not completed.
+    next_iter = true;
+  } else {
+    // Runs predict.
+    auto token = context_.Predict(predict_option);
+    if (!context_.Feed(token) || (token == model_.GetEos())) {
+      // If context is full or token is EOS, stop generating.
+      next_request = callback.doneRequest().send().ignoreResult();
+    } else {
+      // Should continue generating.
+      next_request = newPredictCallbackRequest(callback, token).send().ignoreResult();
+      next_iter = true;
+    }
   }
-  if (token == model_.GetEos()) {
-    return callback.doneRequest().send().ignoreResult();
+  if (next_iter) {
+    return next_request.then([this,
+                              callback = kj::mv(callback),
+                              eval_option = kj::mv(eval_option),
+                              predict_option = kj::mv(predict_option)]() mutable {
+      return predictUntilEosInternal(kj::mv(callback), kj::mv(eval_option), kj::mv(predict_option));
+    });
   }
-  return newPredictRequest(callback, token)
-      .send()
-      .ignoreResult()
-      .then([this,
-             callback = kj::mv(callback),
-             eval_option = kj::mv(eval_option),
-             predict_option = kj::mv(predict_option)]() mutable {
-        return predictUntilEosInternal(kj::mv(callback), kj::mv(eval_option), kj::mv(predict_option));
-      });
+  return next_request;
 }
 
-ContextServer::PredictRequest ContextServer::newPredictRequest(proto::Context::PredictCallback::Client& callback,
-                                                               llama_token token) {
+ContextServer::PredictCallbackRequest ContextServer::newPredictCallbackRequest(PredictCallback::Client callback,
+                                                                               llama_token token) {
   auto request = callback.callbackRequest();
   auto result = request.getToken();
   result.setId(token);
