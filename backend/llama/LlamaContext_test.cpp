@@ -10,7 +10,7 @@
 TEST_CASE("The model maintains (feed, eval, and predict) the context correctly", "[llama][context]") {
   // Build the model (llama-2-7b.Q4_0.gguf).
   // The predict.temperature is 0.0.
-  auto config = muton::playground::llm::Config::Read();
+  auto config = muton::playground::llm::Config::Read("config-test.json");
   muton::playground::llm::LlamaScope scope(true);
   muton::playground::llm::LlamaParams params(config->getParams());
   muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
