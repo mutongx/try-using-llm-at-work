@@ -1,6 +1,7 @@
 #ifndef MUTON_PLAYGROUND_LLM_LLAMA_LLAMA_TOKENIZER_H
 #define MUTON_PLAYGROUND_LLM_LLAMA_LLAMA_TOKENIZER_H
 
+#include <array>
 #include <queue>
 #include <string>
 #include <string_view>
