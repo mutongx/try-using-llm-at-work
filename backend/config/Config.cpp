@@ -9,9 +9,9 @@
 
 namespace muton::playground::llm {
 
-Config::ConfigType Config::Read() {
+Config::ConfigType Config::Read(std::string const& config_path) {
   Config::ConfigType config;
-  std::ifstream config_file("config.json");
+  std::ifstream config_file(config_path);
   if (!config_file.good()) {
     throw std::runtime_error("failed to open config.json");
   }
