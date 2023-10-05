@@ -23,7 +23,7 @@ TEST_CASE("The model maintains (feed, eval, and predict) the context correctly",
   REQUIRE(context.Feed(tokens.token_id) == true);  // Feed all tokens.
   REQUIRE(context.Eval(config->getEval()) == 0);
   std::vector<std::string> prediction{" make", " le", "mon", "ade", "."};
-  for (const auto predict_token : prediction) {
+  for (const auto& predict_token : prediction) {
     auto next_token = context.Predict(config->getPredict());
     REQUIRE(context.Feed(next_token) == true);
     REQUIRE(context.Eval(config->getEval()) == 0);
@@ -53,7 +53,7 @@ TEST_CASE("The model can eval in smaller batch size", "[llama][context]") {
   while (context.Eval(config->getEval()) > 0) {}
   // The model can predict as previous test.
   std::vector<std::string> prediction{" make", " le", "mon", "ade", "."};
-  for (const auto predict_token : prediction) {
+  for (const auto& predict_token : prediction) {
     auto next_token = context.Predict(config->getPredict());
     REQUIRE(context.Feed(next_token) == true);
     REQUIRE(context.Eval(config->getEval()) == 0);
