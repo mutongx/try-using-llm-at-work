@@ -50,6 +50,10 @@ class LlamaClientWrapper:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    @property
+    def app(self):
+        return self._app
+
     async def tokenize(self, prompt: str) -> TokenizeResult:
         model = self._app.getModel().model
         tokens = model.newTokenizer().tokenizer.tokenize(prompt).tokens
