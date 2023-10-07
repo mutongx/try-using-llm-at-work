@@ -16,6 +16,6 @@ jobs:
       - name: Download Model
         run: mkdir -p models && curl -L https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q2_K.gguf >models/llama-2-7b.Q2_K.gguf
       - name: Build
-        run: mkdir -p build && cd build && CC=clang CXX=clang++ cmake .. && make -j$(nproc)
+        run: mkdir -p build && cd build && cmake .. && make -j$(nproc)
       - name: Test
         run: ./build/backend/backend_test
