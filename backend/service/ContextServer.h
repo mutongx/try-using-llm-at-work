@@ -2,6 +2,7 @@
 #define MUTON_PLAYGROUND_LLM_SERVICE_CONTEXT_SERVER_H
 
 #include "llama/LlamaContext.h"
+#include "llama/LlamaModel.h"
 #include "llama/LlamaParams.h"
 
 #include "service.capnp.h"
@@ -30,7 +31,7 @@ class ContextServer : public proto::Context::Server {
   kj::Promise<bool> feedTokensInternal(proto::Tokens::Client tokens, int32_t begin, int32_t end);
   kj::Promise<bool> evalInternal(proto::EvalOption::Reader eval_option);
   kj::Promise<void> predictInternal(proto::Context::PredictCallback::Client callback,
-                                           proto::PredictOption::Reader predict_option);
+                                    proto::PredictOption::Reader predict_option);
   kj::Promise<void> predictUntilEosInternal(proto::Context::PredictCallback::Client callback,
                                             proto::EvalOption::Reader eval_option,
                                             proto::PredictOption::Reader predict_option);

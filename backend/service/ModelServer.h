@@ -4,8 +4,6 @@
 #include "config/Config.h"
 #include "llama/LlamaModel.h"
 #include "llama/LlamaParams.h"
-#include "llama/LlamaScope.h"
-#include "llama/LlamaTokenizer.h"
 
 #include "service.capnp.h"
 

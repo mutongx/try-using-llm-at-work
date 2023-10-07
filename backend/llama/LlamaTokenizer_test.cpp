@@ -2,13 +2,11 @@
 
 #include "config/Config.h"
 #include "llama/LlamaModel.h"
-#include "llama/LlamaScope.h"
 #include "llama/LlamaTokenizer.h"
 
 TEST_CASE("The model tokenizes a string correctly", "[llama][tokenizer]") {
   // Build the model (llama-2-7b.Q4_0.gguf).
   auto config = muton::playground::llm::Config::Read("config-test.json");
-  muton::playground::llm::LlamaScope scope(true);
   muton::playground::llm::LlamaParams params(config->getParams());
   muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
   muton::playground::llm::LlamaTokenizer tokenizer(model);
