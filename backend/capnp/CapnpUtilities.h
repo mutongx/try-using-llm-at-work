@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-#include <capnp/orphan.h>
+#include "capnp/orphan.h"
 
 namespace muton::playground::llm {
 

@@ -4,8 +4,8 @@
 #include <istream>
 #include <string>
 
-#include <capnp/compat/json.h>
-#include <capnp/message.h>
+#include "capnp/compat/json.h"
+#include "capnp/message.h"
 
 namespace muton::playground::llm {
 

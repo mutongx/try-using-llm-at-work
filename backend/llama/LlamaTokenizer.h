@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <llama.h>
+#include "llama.h"
 
 #include "LlamaModel.h"
 

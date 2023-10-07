@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <capnp/message.h>
+#include "capnp/message.h"
 
 namespace muton::playground::llm {
 

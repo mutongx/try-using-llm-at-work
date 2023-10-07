@@ -1,7 +1,7 @@
 #ifndef MUTON_PLAYGROUND_LLM_LLAMA_LLAMA_PARAMS_H
 #define MUTON_PLAYGROUND_LLM_LLAMA_LLAMA_PARAMS_H
 
-#include <llama.h>
+#include "llama.h"
 
 #include "common.capnp.h"
 

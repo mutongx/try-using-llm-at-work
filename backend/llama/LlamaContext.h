@@ -6,7 +6,7 @@
 #include <thread>
 #include <vector>
 
-#include <llama.h>
+#include "llama.h"
 
 #include "LlamaModel.h"
 #include "LlamaParams.h"

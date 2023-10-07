@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <llama.h>
+#include "llama.h"
 
 #include "LlamaParams.h"
 
