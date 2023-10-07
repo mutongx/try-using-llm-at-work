@@ -9,10 +9,12 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 set(LLAMA_CUBLAS ON)
 set(LLAMA_BUILD_EXAMPLES ON)
+set(BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(thirdparty/capnproto)
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/llama.cpp)
+add_subdirectory(thirdparty/oniguruma)
 add_subdirectory(thirdparty/catch2)
 
 add_subdirectory(proto)
