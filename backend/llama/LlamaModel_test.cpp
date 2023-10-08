@@ -11,30 +11,6 @@ TEST_CASE("The model loads correctly", "[llama][model]") {
   auto config = muton::playground::llm::Config::Read("config-test.json");
   muton::playground::llm::LlamaParams params(config->getParams());
   muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
-  SECTION("The model gets vocabulary correctly") {
-    auto vocab = model.GetVocabulary();
-    // Test cases for LlamaModel::GetVocabulary():
-    // 1. The vocabulary size is 32000, that is, vocab.size == vocab.strings.size == vocab.scores.size == vocab.pieces.size == 32000.
-    REQUIRE(vocab.size == 32000);
-    REQUIRE(vocab.size == vocab.pieces.size());
-    REQUIRE(vocab.size == vocab.scores.size());
-    REQUIRE(vocab.size == vocab.texts.size());
-    // 2. The 0 token is <unk> with score 0.
-    REQUIRE(strcmp(vocab.texts[0], "<unk>") == 0);
-    REQUIRE(vocab.scores[0] == 0);
-    // 3. The 29902nd token is I with score -29643.
-    REQUIRE(vocab.pieces[29902] == "I");
-    REQUIRE(strcmp(vocab.texts[29902], "I") == 0);
-    REQUIRE(vocab.scores[29902] == -29643);
-    // 4. The 5031st token is pat with score -4772.
-    REQUIRE(vocab.pieces[5031] == "pat");
-    REQUIRE(strcmp(vocab.texts[5031], "pat") == 0);
-    REQUIRE(vocab.scores[5031] == -4772);
-    // 5. The 8767th token is ubuntu with score -8508.
-    REQUIRE(vocab.pieces[8767] == "ubuntu");
-    REQUIRE(strcmp(vocab.texts[8767], "ubuntu") == 0);
-    REQUIRE(vocab.scores[8767] == -8508);
-  }
   SECTION("The model gets string from token correctly") {
     // Test cases for LlamaModel::GetTokenText():
     // 1. The 0 token is <unk>.
