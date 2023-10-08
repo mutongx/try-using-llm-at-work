@@ -24,6 +24,10 @@ class LlamaContext {
   LlamaContext& operator=(LlamaContext&& another) noexcept;
   ~LlamaContext();
 
+  [[nodiscard]] llama_context* Get() {
+    return context_;
+  }
+
   [[nodiscard]] bool Feed(llama_token token_pending);
   [[nodiscard]] bool Feed(std::span<llama_token> tokens_pending);
   [[nodiscard]] bool FeedBos();
