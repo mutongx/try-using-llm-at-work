@@ -58,10 +58,10 @@ class LlamaClientWrapper:
         model = self._app.getModel().model
         tokens = model.newTokenizer().tokenizer.tokenize(prompt).tokens
         size, token_id, token_pos, token_size = await asyncio.gather(
-            tokens.getSize().a_wait(),
-            tokens.getTokenId().a_wait(),
-            tokens.getTokenPos().a_wait(),
-            tokens.getTokenSize().a_wait(),
+            tokens.getSize(),
+            tokens.getTokenId(),
+            tokens.getTokenPos(),
+            tokens.getTokenSize(),
         )
         return TokenizeResult(
             size=size.to_dict()["result"],
@@ -80,7 +80,7 @@ class LlamaClientWrapper:
             .feedBos().context
             .feedTokens(tokens=tokens).context
             .predictUntilEos(callback=callback, evalOption=eval_option,
-                             predictOption=predict_option).a_wait(), name="predict")
+                             predictOption=predict_option), name="predict")
         receive = asyncio.create_task(callback.get(), name="receive")
 
         pending = {predict, receive}
