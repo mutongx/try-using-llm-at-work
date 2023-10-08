@@ -38,7 +38,16 @@ class LlamaVocabulary {
     return it->second[split];
   }
 
+  [[nodiscard]] std::string GetTokenPiece(llama_token token) {
+    if (type_ == LLAMA_VOCAB_TYPE_SPM) {
+      return GetTokenPieceSpm(token);
+    }
+    return "";
+  }
+
  private:
+
+  [[nodiscard]] std::string GetTokenPieceSpm(llama_token token);
 
   struct string_hash {
     using is_transparent = void;
@@ -60,11 +69,14 @@ class LlamaVocabulary {
   std::vector<float> tokens_score_;
   std::vector<enum llama_token_type> tokens_type_;
 
+  std::vector<std::string_view> tokens_piece_;
+
   // Keys represent merged strings, while values are ranks indexed by the length of the first part of the merged string.
   // In the associated vector, 0 indicates cannot merge, while values > 0 represent actual rank values.
   std::unordered_map<std::string, std::vector<size_t>, string_hash, std::equal_to<>> merge_ranks_;
 
   std::vector<char> tokens_text_store_;
+  std::vector<char> tokens_piece_store_;
 };
 
 }  // namespace muton::playground::llm

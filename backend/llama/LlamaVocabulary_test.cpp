@@ -20,6 +20,10 @@ TEST_CASE("The vocabulary loads correctly", "[llama][vocabulary]") {
     REQUIRE(vocab.GetTokenText(i) == llama_token_get_text(context.Get(), i));
     REQUIRE(vocab.GetTokenScore(i) == llama_token_get_score(context.Get(), i));
     REQUIRE(vocab.GetTokenType(i) == llama_token_get_type(context.Get(), i));
+    std::string piece;
+    piece.resize(-llama_token_to_piece(model.Get(), i, nullptr, 0));
+    llama_token_to_piece(model.Get(), i, piece.data(), piece.size());
+    REQUIRE(vocab.GetTokenPiece(i) == piece);
   }
 
 }

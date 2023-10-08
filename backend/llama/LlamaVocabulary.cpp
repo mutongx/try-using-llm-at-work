@@ -150,4 +150,49 @@ LlamaVocabulary LlamaVocabulary::FromGguf(std::string const& path) {
   return result;
 }
 
+std::string LlamaVocabulary::GetTokenPieceSpm(llama_token token) {
+  if (tokens_type_[token] == LLAMA_TOKEN_TYPE_NORMAL) {
+    std::string result;
+    auto const* p = tokens_text_[token].data();
+    while (*p != 0) {
+      if (*p == '\xe2' && *(p + 1) != 0 && *(p + 1) == '\x96' && *(p + 2) != 0 && *(p + 2) == '\x81') {
+        result.push_back(' ');
+        p += 3;
+      } else {
+        result.push_back(*p);
+        ++p;
+      }
+    }
+    return result;
+  }
+  if (tokens_type_[token] == LLAMA_TOKEN_TYPE_UNKNOWN) {
+    return "\xe2\x96\x85";
+  }
+  if (tokens_type_[token] == LLAMA_TOKEN_TYPE_CONTROL) {
+    return "";
+  }
+  if (tokens_type_[token] == LLAMA_TOKEN_TYPE_BYTE) {
+    std::string result(1, 0);
+    auto const* p = tokens_text_[token].data();
+    if (p[0] != '<' || p[1] != '0' || p[2] != 'x') {
+      throw std::runtime_error("invalid byte token text");
+    }
+    for (p += 3; *p != '>' && *p != 0; ++p) {
+      result[0] *= 16;
+      if ('0' <= *p && *p <= '9') {
+        result[0] += (*p - '0');
+      } else if ('A' <= *p && *p <= 'F') {
+        result[0] += (*p - 'A' + 10);
+      } else {
+        throw std::runtime_error("invalid byte token text");
+      }
+    }
+    if (*p != '>') {
+      throw std::runtime_error("invalid byte token text");
+    }
+    return result;
+  }
+  return "";
+}
+
 }  // namespace muton::playground::llm
