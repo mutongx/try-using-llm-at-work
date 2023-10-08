@@ -25,7 +25,7 @@ TEST_CASE("The model maintains (feed, eval, and predict) the context correctly",
     auto next_token = context.Predict(config->getPredict());
     REQUIRE(context.Feed(next_token) == true);
     REQUIRE(context.Eval(config->getEval()) == 0);
-    REQUIRE(vocab.pieces[next_token] == predict_token);
+    REQUIRE(vocab.GetTokenPiece(next_token) == predict_token);
   }
 }
 
@@ -54,6 +54,6 @@ TEST_CASE("The model can eval in smaller batch size", "[llama][context]") {
     auto next_token = context.Predict(config->getPredict());
     REQUIRE(context.Feed(next_token) == true);
     REQUIRE(context.Eval(config->getEval()) == 0);
-    REQUIRE(vocab.pieces[next_token] == predict_token);
+    REQUIRE(vocab.GetTokenPiece(next_token) == predict_token);
   }
 }
