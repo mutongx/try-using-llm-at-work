@@ -36,7 +36,6 @@ class PredictCallback(Context.PredictCallback.Server):
 
 
 class LlamaClientWrapper:
-
     def __init__(self, addr: str):
         self._addr = addr
 
@@ -67,7 +66,7 @@ class LlamaClientWrapper:
             size=size.to_dict()["result"],
             token_id=token_id.to_dict()["result"],
             token_pos=token_pos.to_dict()["result"],
-            token_size=token_size.to_dict()["result"]
+            token_size=token_size.to_dict()["result"],
         )
 
     async def run_completion(self, prompt: str, eval_option: EvalOption, predict_option: PredictOption):
@@ -76,11 +75,12 @@ class LlamaClientWrapper:
         callback = PredictCallback()
 
         predict = asyncio.create_task(
-            model.newContext().context
-            .feedBos().context
-            .feedTokens(tokens=tokens).context
-            .predictUntilEos(callback=callback, evalOption=eval_option,
-                             predictOption=predict_option), name="predict")
+            model.newContext()
+            .context.feedBos()
+            .context.feedTokens(tokens=tokens)
+            .context.predictUntilEos(callback=callback, evalOption=eval_option, predictOption=predict_option),
+            name="predict",
+        )
         receive = asyncio.create_task(callback.get(), name="receive")
 
         pending = {predict, receive}

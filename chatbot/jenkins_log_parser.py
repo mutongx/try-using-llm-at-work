@@ -10,11 +10,10 @@ class LogLine(NamedTuple):
 class LogItem(NamedTuple):
     title: Optional[str]
     lines: List[LogLine]
-    children: 'List[LogItem]'
+    children: "List[LogItem]"
 
 
 class JenkinsLogParser:
-
     def __init__(self):
         self._items: List[LogItem] = [LogItem(title=None, lines=[], children=[])]
         self._finalized = False
