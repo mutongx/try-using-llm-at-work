@@ -20,6 +20,7 @@ set(LLAMA_WRAPPER_SRCS
         llama/LlamaModel.cpp
         llama/LlamaContext.cpp
         llama/LlamaTokenizer.cpp
+        llama/LlamaVocabulary.cpp
 )
 
 set(LLAMA_WRAPPER_HDRS
@@ -27,6 +28,7 @@ set(LLAMA_WRAPPER_HDRS
         llama/LlamaModel.h
         llama/LlamaContext.h
         llama/LlamaTokenizer.h
+        llama/LlamaVocabulary.h
 )
 
 set(CONFIG_SRCS
@@ -67,6 +69,7 @@ set(TEST_SRCS
         llama/LlamaModel_test.cpp
         llama/LlamaTokenizer_test.cpp
         llama/LlamaContext_test.cpp
+        llama/LlamaVocabulary_test.cpp
 )
 
 add_executable(backend_test
