@@ -28,7 +28,7 @@ struct fake_llama_context {
 };
 
 LlamaModel::LlamaModel(std::string const &path, const LlamaParams &params)
-    : model_(llama_load_model_from_file(path.c_str(), params.GetModelParams())) {
+    : path_(path), model_(llama_load_model_from_file(path.c_str(), params.GetModelParams())) {
   if (model_ == nullptr) {
     throw std::runtime_error("failed to load model");
   }

@@ -36,6 +36,7 @@ class LlamaModel {
   [[nodiscard]] llama_token GetEos() const;
 
  private:
+  std::string path_;
   llama_model* model_;
 };
 
