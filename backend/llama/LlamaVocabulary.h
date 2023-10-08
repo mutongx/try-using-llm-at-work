@@ -14,7 +14,7 @@ class LlamaVocabulary {
  public:
   static LlamaVocabulary FromGguf(std::string const& path);
 
-  [[nodiscard]] size_t Size() const {
+  [[nodiscard]] size_t GetSize() const {
     return size_;
   }
 

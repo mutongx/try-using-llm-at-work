@@ -15,8 +15,8 @@ TEST_CASE("The vocabulary loads correctly", "[llama][vocabulary]") {
   muton::playground::llm::LlamaContext context(params, model);
 
   // Compare vocabulary with llama.cpp
-  REQUIRE(vocab.Size() == llama_n_vocab(model.Get()));
-  for (size_t i = 0; i < vocab.Size(); ++i) {
+  REQUIRE(vocab.GetSize() == llama_n_vocab(model.Get()));
+  for (size_t i = 0; i < vocab.GetSize(); ++i) {
     REQUIRE(vocab.GetTokenText(i) == llama_token_get_text(context.Get(), i));
     REQUIRE(vocab.GetTokenScore(i) == llama_token_get_score(context.Get(), i));
     REQUIRE(vocab.GetTokenType(i) == llama_token_get_type(context.Get(), i));
