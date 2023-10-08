@@ -56,21 +56,8 @@ llama_model *LlamaModel::Get() const {
   return model_;
 }
 
-LlamaModel::Vocabulary LlamaModel::GetVocabulary() const {
-  fake_llama_context fake_context(model_);
-  Vocabulary result;
-  result.size = llama_n_vocab(model_);
-  result.pieces.resize(result.size);
-  result.texts.resize(result.size);
-  result.scores.resize(result.size);
-  for (llama_token token{0}; token < result.size; ++token) {
-    auto piece_size = -llama_token_to_piece(model_, token, nullptr, 0);
-    result.pieces[token].resize(piece_size);
-    llama_token_to_piece(model_, token, result.pieces[token].data(), piece_size);
-    result.scores[token] = llama_token_get_score(fake_context, token);
-    result.texts[token] = llama_token_get_text(fake_context, token);
-  }
-  return result;
+LlamaVocabulary LlamaModel::GetVocabulary() const {
+  return LlamaVocabulary::FromGguf(path_);
 }
 
 std::string LlamaModel::GetTokenPiece(llama_token token) const {

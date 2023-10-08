@@ -7,6 +7,7 @@
 #include "llama.h"
 
 #include "LlamaParams.h"
+#include "LlamaVocabulary.h"
 
 namespace muton::playground::llm {
 
@@ -22,13 +23,7 @@ class LlamaModel {
 
   [[nodiscard]] llama_model* Get() const;
 
-  struct Vocabulary {
-    size_t size{};
-    std::vector<std::string> pieces;
-    std::vector<float> scores;
-    std::vector<char const*> texts;
-  };
-  [[nodiscard]] Vocabulary GetVocabulary() const;
+  [[nodiscard]] LlamaVocabulary GetVocabulary() const;
 
   [[nodiscard]] std::string GetTokenPiece(llama_token token) const;
   [[nodiscard]] char const* GetTokenText(llama_token token) const;
