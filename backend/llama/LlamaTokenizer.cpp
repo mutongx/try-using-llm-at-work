@@ -6,12 +6,11 @@ namespace muton::playground::llm {
 
 std::array<size_t, 16> LlamaTokenizer::Utf8SymbolSizeLookupTable = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4};
 
-LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) {
-  auto vocabulary = model.GetVocabulary();
-  pieces_ = std::move(vocabulary.pieces);
-  scores_ = std::move(vocabulary.scores);
-  for (int i = 0; i < pieces_.size(); ++i) {
-    mapping_[pieces_[i]] = i;
+LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) : vocabulary_(model.GetVocabulary()) {
+  pieces_.reserve(vocabulary_.GetSize());
+  for (int i = 0; i < vocabulary_.GetSize(); ++i) {
+    pieces_.push_back(vocabulary_.GetTokenPiece(i));
+    pieces_mapping_[pieces_[i]] = i;
   }
 }
 
@@ -57,10 +56,10 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
     for (index = 0; index != -1; index = symbols[index].next) {
       auto& item = symbols[index];
       std::string_view symbol{item.ptr, item.size};
-      auto token_it = mapping_.find(symbol);
-      if (token_it == mapping_.end()) {
+      auto token_it = pieces_mapping_.find(symbol);
+      if (token_it == pieces_mapping_.end()) {
         for (size_t i = 0; i < symbol.size(); ++i) {
-          auto token_id = mapping_.at(std::string_view(symbol.data() + i, 1));
+          auto token_id = pieces_mapping_.at(std::string_view(symbol.data() + i, 1));
           result.token_id.push_back(token_id);
           result.token_pos.push_back(symbol.data() + i - text.data());
           result.token_size.push_back(1);
@@ -85,11 +84,11 @@ void LlamaTokenizer::TryAddBigram(SentencePieceBigramQueue& queue,
     return;
   }
   auto symbol = std::string_view(symbols[left].ptr, symbols[left].size + symbols[right].size);
-  auto token_it = mapping_.find(symbol);
-  if (token_it == mapping_.end()) {
+  auto token_it = pieces_mapping_.find(symbol);
+  if (token_it == pieces_mapping_.end()) {
     return;
   }
-  queue.emplace(SentencePieceBigram{left, right, scores_[token_it->second], symbol.size()});
+  queue.emplace(SentencePieceBigram{left, right, vocabulary_.GetTokenScore(token_it->second), symbol.size()});
 }
 
 }  // namespace muton::playground::llm

@@ -11,6 +11,7 @@
 #include "llama.h"
 
 #include "LlamaModel.h"
+#include "LlamaVocabulary.h"
 
 namespace muton::playground::llm {
 class LlamaTokenizer {
@@ -55,9 +56,10 @@ class LlamaTokenizer {
                     SentencePieceIndex left,
                     SentencePieceIndex right);
 
+  LlamaVocabulary vocabulary_;
+
   std::vector<std::string> pieces_;
-  std::vector<float> scores_;
-  std::unordered_map<std::string_view, llama_token> mapping_;
+  std::unordered_map<std::string_view, llama_token> pieces_mapping_;
 };
 
 }  // namespace muton::playground::llm
