@@ -31,6 +31,14 @@ set(LLAMA_WRAPPER_HDRS
         llama/LlamaVocabulary.h
 )
 
+set(UTILITIES_SRCS
+        utilities/UTF8Text.cpp
+)
+
+set(UTILITIES_HDRS
+        utilities/UTF8Text.h
+)
+
 set(CONFIG_SRCS
         config/Config.cpp
 )
@@ -57,6 +65,7 @@ add_executable(backend
         ${INITIALIZE_SRCS} ${INITIALIZE_HDRS}
         ${CAPNP_WRAPPER_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
+        ${UTILITIES_SRCS} ${UTILITIES_HDRS}
         ${CONFIG_SRCS} ${CONFIG_HDRS}
         ${SERVICE_SRCS} ${SERVICE_HDRS}
         main.cpp
@@ -70,12 +79,14 @@ set(TEST_SRCS
         llama/LlamaTokenizer_test.cpp
         llama/LlamaContext_test.cpp
         llama/LlamaVocabulary_test.cpp
+        utilities/UTF8Text_test.cpp
 )
 
 add_executable(backend_test
         ${INITIALIZE_SRCS} ${INITIALIZE_HDRS}
         ${CAPNP_WRAPPER_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
+        ${UTILITIES_SRCS} ${UTILITIES_HDRS}
         ${CONFIG_SRCS} ${CONFIG_HDRS}
         ${TEST_SRCS}
         test_main.cpp
