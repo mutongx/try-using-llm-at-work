@@ -42,12 +42,16 @@ class LlamaVocabulary {
     if (type_ == LLAMA_VOCAB_TYPE_SPM) {
       return GetTokenPieceSpm(token);
     }
+    if (type_ == LLAMA_VOCAB_TYPE_BPE){
+      return GetTokenPieceBpe(token);
+    }
     return "";
   }
 
  private:
 
   [[nodiscard]] std::string GetTokenPieceSpm(llama_token token);
+  [[nodiscard]] std::string GetTokenPieceBpe(llama_token token);
 
   struct string_hash {
     using is_transparent = void;

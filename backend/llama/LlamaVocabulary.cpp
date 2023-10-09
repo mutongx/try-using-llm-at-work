@@ -6,6 +6,8 @@
 
 #include "ggml.h"
 
+#include "utilities/UTF8Text.h"
+
 namespace muton::playground::llm {
 
 LlamaVocabulary LlamaVocabulary::FromGguf(std::string const& path) {
@@ -191,6 +193,51 @@ std::string LlamaVocabulary::GetTokenPieceSpm(llama_token token) {
       throw std::runtime_error("invalid byte token text");
     }
     return result;
+  }
+  return "";
+}
+
+std::string LlamaVocabulary::GetTokenPieceBpe(llama_token token) {
+  class BpeByteMap {
+   public:
+    BpeByteMap() : byte_map_(512, 0), set_mask_(512, 0) {
+      size_t invisible{0};
+      uint8_t current{0};
+      do {
+        // See https://github.com/karpathy/minGPT/blob/master/mingpt/bpe.py for detailed explanations
+        // ChatGPT: In summary, OpenAI maps every byte from 0 to 255 to Unicode characters, some of which are preserved
+        // while others are shifted to new characters to ensure they appear visually pleasing in the final dictionary.
+        if (33 <= current && current <= 126 || 161 <= current && current <= 172 || 174 <= current && current <= 255) {
+          byte_map_[current] = current;
+          set_mask_[current] = 1;
+        } else {
+          byte_map_[invisible + 256] = current;
+          set_mask_[invisible + 256] = 1;
+          ++invisible;
+        }
+      } while (current++ != 255);
+    }
+    char Get(uint32_t cp) {
+      if (set_mask_[cp] == 0) {
+        throw std::runtime_error("invalid code page");
+      }
+      return static_cast<char>(byte_map_[cp]);
+    }
+
+   private:
+    std::vector<uint8_t> byte_map_;
+    std::vector<uint8_t> set_mask_;
+  };
+  static BpeByteMap byte_map;
+  if (tokens_type_[token] == LLAMA_TOKEN_TYPE_NORMAL) {
+    std::string result;
+    for (auto symbol : UTF8Text(tokens_text_[token])) {
+      result.push_back(byte_map.Get(symbol.cp));
+    }
+    return result;
+  }
+  if (tokens_type_[token] == LLAMA_TOKEN_TYPE_CONTROL) {
+    return "";
   }
   return "";
 }
