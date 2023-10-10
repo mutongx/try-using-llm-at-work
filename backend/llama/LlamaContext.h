@@ -19,9 +19,9 @@ class LlamaContext {
  public:
   LlamaContext(LlamaParams const& params, LlamaModel const& model);
   LlamaContext(LlamaContext const&) = delete;
-  LlamaContext(LlamaContext&& another) noexcept;
+  LlamaContext(LlamaContext&& another) = delete;
   LlamaContext& operator=(LlamaContext const&) = delete;
-  LlamaContext& operator=(LlamaContext&& another) noexcept;
+  LlamaContext& operator=(LlamaContext&& another) = delete;
   ~LlamaContext();
 
   [[nodiscard]] llama_context* Get() {
@@ -37,7 +37,6 @@ class LlamaContext {
   [[nodiscard]] llama_token Predict(proto::PredictOption::Reader option);
 
  private:
-  void MoveFrom(LlamaContext&& another) noexcept;
 
   size_t context_size_{};
 

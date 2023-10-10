@@ -11,25 +11,6 @@ LlamaContext::LlamaContext(LlamaParams const& params, LlamaModel const& model)
       tokens_seq_id_(context_size_, 0),
       context_(llama_new_context_with_model(model.Get(), params.GetContextParams())) {}
 
-LlamaContext::LlamaContext(LlamaContext&& another) noexcept {
-  MoveFrom(std::move(another));
-}
-
-LlamaContext& LlamaContext::operator=(LlamaContext&& another) noexcept {
-  MoveFrom(std::move(another));
-  return *this;
-}
-
-void LlamaContext::MoveFrom(LlamaContext&& another) noexcept {
-  context_size_ = another.context_size_;
-  tokens_ = std::move(another.tokens_);
-  tokens_begin_ = another.tokens_begin_;
-  tokens_size_ = another.tokens_size_;
-  tokens_eval_ = another.tokens_eval_;
-  context_ = another.context_;
-  another.context_ = nullptr;
-}
-
 bool LlamaContext::FeedBos() {
   auto bos = llama_token_bos(context_);
   return Feed(std::span<llama_token>(&bos, 1));
