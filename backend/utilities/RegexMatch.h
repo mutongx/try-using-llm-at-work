@@ -19,9 +19,9 @@ class RegexMatch {
    private:
     void Update();
     std::string_view text_;
-    size_t pos_;
-    size_t size_;
-    OnigRegex  regex_;
+    size_t pos_{};
+    size_t size_{};
+    OnigRegex regex_;
     OnigRegion* region_;
   };
   RegexMatch(std::string_view text, std::string_view pattern);
