@@ -27,34 +27,35 @@ class LlamaTokenizer {
   [[nodiscard]] TokenizeResult Tokenize(std::string_view text);
 
  private:
-  static std::array<size_t, 16> Utf8SymbolSizeLookupTable;
-
-  using SentencePieceIndex = int;
-  struct SentencePieceSymbol {
-    SentencePieceIndex prev{};
-    SentencePieceIndex next{};
-    const char* ptr{};
-    size_t size{};
+  using TokenIndex = int;
+  struct Symbol {
+    TokenIndex prev{};
+    TokenIndex next{};
+    std::string_view str{};
   };
-  using SentencePieceSymbolStorage = std::vector<SentencePieceSymbol>;
-  struct SentencePieceBigram {
-    SentencePieceIndex left{};
-    SentencePieceIndex right{};
+  using SymbolStorage = std::vector<Symbol>;
+  struct Bigram {
+    TokenIndex left{};
+    TokenIndex right{};
     float score{};
-    size_t size{};
+    int rank{};
+    std::string_view str{};
   };
-  struct SentencePieceBigramCompare {
-    bool operator()(SentencePieceBigram& lhs, SentencePieceBigram& rhs) {
+
+  struct SpmBigramCompare {
+    bool operator()(Bigram& lhs, Bigram& rhs) {
       return (lhs.score < rhs.score) || (lhs.score == rhs.score && lhs.left > rhs.left);
     }
   };
-  using SentencePieceBigramQueue =
-      std::priority_queue<SentencePieceBigram, std::vector<SentencePieceBigram>, SentencePieceBigramCompare>;
+  struct BpeBigramCompare {
+    bool operator()(Bigram& lhs, Bigram& rhs) {
+      return (lhs.rank > rhs.rank) || (lhs.rank == rhs.rank && lhs.left > rhs.left);
+    }
+  };
+  using SpmBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, SpmBigramCompare>;
+  using BpeBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, BpeBigramCompare>;
 
-  void TryAddBigram(SentencePieceBigramQueue& queue,
-                    SentencePieceSymbolStorage const& symbols,
-                    SentencePieceIndex left,
-                    SentencePieceIndex right);
+  void TryAddSpmBigram(SpmBigramQueue& queue, SymbolStorage const& symbols, TokenIndex left, TokenIndex right);
 
   LlamaVocabulary vocabulary_;
 
