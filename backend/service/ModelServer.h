@@ -24,6 +24,7 @@ class ModelServer : public proto::Model::Server {
  private:
   LlamaParams& params_;
   LlamaModel& model_;
+  LlamaVocabulary vocabulary_;
 };
 
 }  // namespace muton::playground::llm

@@ -11,7 +11,7 @@ namespace muton::playground::llm {
 
 class ContextServer : public proto::Context::Server {
  public:
-  ContextServer(LlamaParams& params, LlamaModel& model);
+  ContextServer(LlamaParams& params, LlamaModel& model, LlamaVocabulary& vocabulary);
   ContextServer(ContextServer&&) = delete;
   ContextServer(ContextServer const&) = delete;
   ContextServer& operator=(ContextServer&&) = delete;
@@ -41,6 +41,7 @@ class ContextServer : public proto::Context::Server {
   PredictCallbackRequest newPredictCallbackRequest(PredictCallback::Client callback, llama_token token);
 
   LlamaModel& model_;
+  LlamaVocabulary& vocabulary_;
   LlamaContext context_;
 };
 

@@ -4,7 +4,8 @@
 
 namespace muton::playground::llm {
 
-ContextServer::ContextServer(LlamaParams& params, LlamaModel& model) : model_(model), context_(params, model) {}
+ContextServer::ContextServer(LlamaParams& params, LlamaModel& model, LlamaVocabulary& vocabulary)
+    : model_(model), vocabulary_(vocabulary), context_(params, model) {}
 
 kj::Promise<void> ContextServer::nop(proto::Context::Server::NopContext context) {
   auto results = context.getResults();
@@ -141,7 +142,7 @@ kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::Predict
   } else {
     // Runs predict.
     auto token = context_.Predict(predict_option);
-    if (!context_.Feed(token) || (token == model_.GetEos())) {
+    if (!context_.Feed(token) || (token == context_.GetEos())) {
       // If context is full or token is EOS, stop generating.
       next_request = callback.doneRequest().send().ignoreResult();
     } else {
@@ -166,7 +167,7 @@ ContextServer::PredictCallbackRequest ContextServer::newPredictCallbackRequest(P
   auto request = callback.callbackRequest();
   auto result = request.getToken();
   result.setId(token);
-  result.setStr(model_.GetTokenPiece(token));
+  result.setStr(vocabulary_.GetTokenPiece(token));
   return request;
 }
 
