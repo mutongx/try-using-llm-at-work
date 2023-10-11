@@ -9,6 +9,7 @@ TEST_CASE("The model tokenizes a string correctly", "[llama][tokenizer]") {
   auto config = muton::playground::llm::Config::Read("config-test.json");
   muton::playground::llm::LlamaParams params(config->getParams());
   muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
+  muton::playground::llm::LlamaVocabulary vocabulary(model.GetVocabulary());
   muton::playground::llm::LlamaTokenizer tokenizer(model);
   auto vocab = model.GetVocabulary();
   // Test cases for LlamaTokenizer::Tokenize():
@@ -20,13 +21,13 @@ TEST_CASE("The model tokenizes a string correctly", "[llama][tokenizer]") {
     REQUIRE(result.size == result.token_pos.size());
     REQUIRE(result.size == result.token_size.size());
     // 2. The first token is "I".
-    REQUIRE(model.GetTokenPiece(result.token_id[0]) == "I");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[0]) == "I");
     REQUIRE(result.token_pos[0] == strlen(""));
     // 3. The second token is " pat".
-    REQUIRE(model.GetTokenPiece(result.token_id[1]) == " pat");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[1]) == " pat");
     REQUIRE(result.token_pos[1] == strlen("I"));
     // 4. The third token is " ubuntu".
-    REQUIRE(model.GetTokenPiece(result.token_id[2]) == " ubuntu");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[2]) == " ubuntu");
     REQUIRE(result.token_pos[2] == strlen("I pat"));
   }
   SECTION("The model tokenizes Chinese sentence correctly") {
@@ -37,16 +38,16 @@ TEST_CASE("The model tokenizes a string correctly", "[llama][tokenizer]") {
     REQUIRE(result.size == result.token_pos.size());
     REQUIRE(result.size == result.token_size.size());
     // 2. The first token is "像".
-    REQUIRE(model.GetTokenPiece(result.token_id[0]) == "像");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[0]) == "像");
     REQUIRE(result.token_pos[0] == strlen(""));
     // 3. The second token is "風".
-    REQUIRE(model.GetTokenPiece(result.token_id[1]) == "風");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[1]) == "風");
     REQUIRE(result.token_pos[1] == strlen("像"));
     // 4. The third token is "一".
-    REQUIRE(model.GetTokenPiece(result.token_id[2]) == "一");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[2]) == "一");
     REQUIRE(result.token_pos[2] == strlen("像風"));
     // 5. The fourth token is "样".
-    REQUIRE(model.GetTokenPiece(result.token_id[3]) == "样");
+    REQUIRE(vocabulary.GetTokenPiece(result.token_id[3]) == "样");
     REQUIRE(result.token_pos[3] == strlen("像風一"));
   }
   SECTION("The model tokenizes an empty string correctly") {

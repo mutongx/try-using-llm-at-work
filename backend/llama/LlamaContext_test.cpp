@@ -5,6 +5,27 @@
 #include "llama/LlamaModel.h"
 #include "llama/LlamaParams.h"
 #include "llama/LlamaTokenizer.h"
+#include "llama/LlamaVocabulary.h"
+
+TEST_CASE("The model can handle BOS and EOS token correctly", "[llama][context]") {
+  auto config = muton::playground::llm::Config::Read("config-test.json");
+  muton::playground::llm::LlamaParams params(config->getParams());
+  muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
+  muton::playground::llm::LlamaVocabulary vocabulary{model.GetVocabulary()};
+  muton::playground::llm::LlamaContext context(params, model);
+  SECTION("The model gets the begin of stream token correctly") {
+    // Test cases for LlamaModel::GetBos():
+    // 1. The begin of stream token is <s>.
+    REQUIRE(context.GetBos() == 1);
+    REQUIRE(vocabulary.GetTokenText(context.GetBos()) == "<s>");
+  }
+  SECTION("The model gets the end of stream token correctly") {
+    // Test cases for LlamaModel::GetEos():
+    // 1. The end of stream token is </s>.
+    REQUIRE(context.GetEos() == 2);
+    REQUIRE(vocabulary.GetTokenText(context.GetEos()) == "</s>");
+  }
+}
 
 TEST_CASE("The model maintains (feed, eval, and predict) the context correctly", "[llama][context]") {
   // Build the model (llama-2-7b.Q4_0.gguf).
