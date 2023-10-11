@@ -5,28 +5,6 @@
 
 namespace muton::playground::llm {
 
-// This struct mimics the layout of llama.cpp's llama_context, as llama.cpp didn't provide any vocabulary-related APIs
-// that directly operates on llama_model. This struct can be passed to llama.cpp APIs that only uses model pointer.
-// I hope that llama.cpp can add more model APIs in the future.
-struct fake_llama_context {
-  fake_llama_context(llama_model *model) : model(*model) {
-    static_cast<void>(cparams);
-  }
-  operator llama_context *() {
-    return reinterpret_cast<llama_context *>(this);
-  }
-  struct {
-    uint32_t n_ctx;
-    uint32_t n_batch;
-    uint32_t n_threads;
-    uint32_t n_threads_batch;
-    float rope_freq_base;
-    float rope_freq_scale;
-    bool mul_mat_q;
-  } cparams{};
-  llama_model const &model;
-};
-
 LlamaModel::LlamaModel(std::string const &path, const LlamaParams &params)
     : path_(path), model_(llama_load_model_from_file(path.c_str(), params.GetModelParams())) {
   if (model_ == nullptr) {
@@ -58,29 +36,6 @@ llama_model *LlamaModel::Get() const {
 
 LlamaVocabulary LlamaModel::GetVocabulary() const {
   return LlamaVocabulary::FromGguf(path_);
-}
-
-std::string LlamaModel::GetTokenPiece(llama_token token) const {
-  std::string result;
-  auto piece_size = -llama_token_to_piece(model_, token, nullptr, 0);
-  result.resize(piece_size);
-  llama_token_to_piece(model_, token, result.data(), piece_size);
-  return result;
-}
-
-char const *LlamaModel::GetTokenText(llama_token token) const {
-  fake_llama_context fake_context(model_);
-  return llama_token_get_text(fake_context, token);
-}
-
-llama_token LlamaModel::GetBos() const {
-  fake_llama_context fake_context(model_);
-  return llama_token_bos(fake_context);
-}
-
-llama_token LlamaModel::GetEos() const {
-  fake_llama_context fake_context(model_);
-  return llama_token_eos(fake_context);
 }
 
 LlamaModel::~LlamaModel() {

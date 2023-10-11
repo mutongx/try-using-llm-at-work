@@ -11,6 +11,13 @@ LlamaContext::LlamaContext(LlamaParams const& params, LlamaModel const& model)
       tokens_seq_id_(context_size_, 0),
       context_(llama_new_context_with_model(model.Get(), params.GetContextParams())) {}
 
+llama_token LlamaContext::GetBos() const {
+  return llama_token_bos(context_);
+}
+
+llama_token LlamaContext::GetEos() const {
+  return llama_token_eos(context_);
+}
 bool LlamaContext::FeedBos() {
   auto bos = llama_token_bos(context_);
   return Feed(std::span<llama_token>(&bos, 1));

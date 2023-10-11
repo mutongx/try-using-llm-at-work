@@ -25,11 +25,6 @@ class LlamaModel {
 
   [[nodiscard]] LlamaVocabulary GetVocabulary() const;
 
-  [[nodiscard]] std::string GetTokenPiece(llama_token token) const;
-  [[nodiscard]] char const* GetTokenText(llama_token token) const;
-  [[nodiscard]] llama_token GetBos() const;
-  [[nodiscard]] llama_token GetEos() const;
-
  private:
   std::string path_;
   llama_model* model_;

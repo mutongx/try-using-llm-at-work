@@ -28,6 +28,9 @@ class LlamaContext {
     return context_;
   }
 
+  [[nodiscard]] llama_token GetBos() const;
+  [[nodiscard]] llama_token GetEos() const;
+
   [[nodiscard]] bool Feed(llama_token token_pending);
   [[nodiscard]] bool Feed(std::span<llama_token> tokens_pending);
   [[nodiscard]] bool FeedBos();
