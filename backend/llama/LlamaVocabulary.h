@@ -30,12 +30,13 @@ class LlamaVocabulary {
     return tokens_type_[token];
   }
 
-  [[nodiscard]] size_t GetMerge(std::string_view text, size_t split) {
-    auto it = merge_ranks_.find(text);
+  [[nodiscard]] int GetMergeRank(std::string_view str, size_t split) {
+    auto it = merge_ranks_.find(str);
     if (it == merge_ranks_.end()) {
-      return 0;
+      return -1;
     }
-    return it->second[split];
+    // will return -1 when cannot merge
+    return it->second[split] - 1;
   }
 
   [[nodiscard]] std::string GetTokenPiece(llama_token token) {
@@ -74,7 +75,7 @@ class LlamaVocabulary {
 
   // Keys represent merged strings, while values are ranks indexed by the length of the first part of the merged string.
   // In the associated vector, 0 indicates cannot merge, while values > 0 represent actual rank values.
-  std::unordered_map<std::string, std::vector<size_t>, string_hash, std::equal_to<>> merge_ranks_;
+  std::unordered_map<std::string, std::vector<int>, string_hash, std::equal_to<>> merge_ranks_;
 
   std::vector<char> tokens_text_store_;
 };

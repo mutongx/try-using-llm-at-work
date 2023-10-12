@@ -139,12 +139,27 @@ LlamaVocabulary LlamaVocabulary::FromGguf(std::string const& path) {
           throw std::runtime_error(std::string().append("invalid merge specification: ").append(merge));
         }
         std::string key;
-        size_t total = strlen(merge) - 1;
-        size_t split = space - merge;
-        key.resize(total);
-        memcpy(key.data(), merge, split);
-        memcpy(key.data() + split, space + 1, total - split);
-        result.merge_ranks_.try_emplace(key, key.size()).first->second[split] = i + 1;
+        key.reserve(strlen(merge));
+        for (auto symbol : UTF8Text(std::string_view(merge, space))) {
+          if (symbol.cp == 256 + ' ') {
+            key.push_back(' ');
+          } else if (symbol.cp == 256 + '\n') {
+            key.push_back('\n');
+          } else {
+            key.append(symbol.str);
+          }
+        }
+        size_t split = key.size();
+        for (auto symbol : UTF8Text(std::string_view(space + 1))) {
+          if (symbol.cp == 256 + ' ') {
+            key.push_back(' ');
+          } else if (symbol.cp == 256 + '\n') {
+            key.push_back('\n');
+          } else {
+            key.append(symbol.str);
+          }
+        }
+        result.merge_ranks_.try_emplace(key, key.size()).first->second[split] = static_cast<int>(i) + 1;
       }
     }
   }
