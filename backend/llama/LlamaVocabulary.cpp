@@ -157,6 +157,7 @@ std::string LlamaVocabulary::GetTokenPieceSpm(llama_token token) {
     std::string result;
     auto const* p = tokens_text_[token].data();
     while (*p != 0) {
+      // Space is unicode LOWER ONE EIGHTH BLOCK
       if (*p == '\xe2' && *(p + 1) != 0 && *(p + 1) == '\x96' && *(p + 2) != 0 && *(p + 2) == '\x81') {
         result.push_back(' ');
         p += 3;
@@ -175,6 +176,7 @@ std::string LlamaVocabulary::GetTokenPieceSpm(llama_token token) {
   }
   if (tokens_type_[token] == LLAMA_TOKEN_TYPE_BYTE) {
     std::string result(1, 0);
+    // Parse <0xXX> to actual byte
     auto const* p = tokens_text_[token].data();
     if (p[0] != '<' || p[1] != '0' || p[2] != 'x') {
       throw std::runtime_error("invalid byte token text");
