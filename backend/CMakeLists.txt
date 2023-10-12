@@ -33,12 +33,12 @@ set(LLAMA_WRAPPER_HDRS
 
 set(UTILITIES_SRCS
         utilities/UTF8Text.cpp
-        utilities/RegexMatch.cpp
+        utilities/RegExp.cpp
 )
 
 set(UTILITIES_HDRS
         utilities/UTF8Text.h
-        utilities/RegexMatch.h
+        utilities/RegExp.h
 )
 
 set(CONFIG_SRCS
@@ -82,7 +82,7 @@ set(TEST_SRCS
         llama/LlamaContext_test.cpp
         llama/LlamaVocabulary_test.cpp
         utilities/UTF8Text_test.cpp
-        utilities/RegexMatch_test.cpp
+        utilities/RegExp_test.cpp
 )
 
 add_executable(backend_test

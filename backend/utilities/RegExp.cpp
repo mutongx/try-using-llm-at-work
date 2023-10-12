@@ -1,11 +1,10 @@
-#include "RegexMatch.h"
+#include "RegExp.h"
 
-#include <array>
 #include <stdexcept>
 
 namespace muton::playground::llm {
 
-RegexMatch::RegexMatch(std::string_view text, std::string_view pattern) : text_(text) {
+RegExp::RegExp(std::string_view pattern) {
   if (onig_new(&regex_,
                reinterpret_cast<OnigUChar const *>(pattern.data()),
                reinterpret_cast<OnigUChar const *>(pattern.data() + pattern.size()),
@@ -15,42 +14,51 @@ RegexMatch::RegexMatch(std::string_view text, std::string_view pattern) : text_(
                nullptr) != ONIG_NORMAL) {
     throw std::runtime_error("onig_new error");
   }
-  region_ = onig_region_new();
 }
 
-RegexMatch::~RegexMatch() {
-  onig_region_free(region_, 1);
+RegExp::~RegExp() {
   onig_free(regex_);
+}
+
+RegExp::Matcher RegExp::Match(std::string_view text) {
+  return {text, regex_};
+}
+
+RegExp::Matcher::Matcher(std::string_view text, OnigRegex regex)
+    : text_(text), regex_(regex), region_(onig_region_new()) {}
+
+RegExp::Matcher::~Matcher() {
+  onig_region_free(region_, 1);
 };
 
-RegexMatch::Iterator RegexMatch::begin() const {
+RegExp::Matcher::Iterator RegExp::Matcher::begin() const {
   return {text_, 0, regex_, region_};
 }
 
-RegexMatch::Iterator RegexMatch::end() const {
+RegExp::Matcher::Iterator RegExp::Matcher::end() const {
   return {text_, text_.size(), regex_, nullptr};
 }
 
-RegexMatch::Iterator::Iterator(std::string_view text, size_t pos, OnigRegex regex, OnigRegion *region)
+RegExp::Matcher::Iterator::Iterator(std::string_view text, size_t pos, OnigRegex regex, OnigRegion *region)
     : text_(text), pos_(pos), regex_(regex), region_(region) {
   Update();
 }
 
-bool RegexMatch::Iterator::operator!=(Iterator const &rhs) const {
+bool RegExp::Matcher::Iterator::operator!=(Iterator const &rhs) const {
   return pos_ != rhs.pos_;
 }
 
-RegexMatch::Iterator &RegexMatch::Iterator::operator++() {
+RegExp::Matcher::Iterator &RegExp::Matcher::Iterator::operator++() {
   pos_ += size_;
   Update();
   return *this;
 }
 
-std::string_view RegexMatch::Iterator::operator*() const {
+std::string_view RegExp::Matcher::Iterator::operator*() const {
   return {text_.data() + pos_, size_};
 }
 
-void RegexMatch::Iterator::Update() {
+void RegExp::Matcher::Iterator::Update() {
   auto const *text_uchar = reinterpret_cast<OnigUChar const *>(text_.data());
   auto search = onig_search(regex_,
                             text_uchar,
