@@ -12,7 +12,7 @@ namespace muton::playground::llm {
 
 class LlamaVocabulary {
  public:
-  static LlamaVocabulary FromGguf(std::string const& path);
+  static LlamaVocabulary FromGguf(std::string const &path);
 
   [[nodiscard]] size_t GetSize() const {
     return size_;
@@ -42,14 +42,13 @@ class LlamaVocabulary {
     if (type_ == LLAMA_VOCAB_TYPE_SPM) {
       return GetTokenPieceSpm(token);
     }
-    if (type_ == LLAMA_VOCAB_TYPE_BPE){
+    if (type_ == LLAMA_VOCAB_TYPE_BPE) {
       return GetTokenPieceBpe(token);
     }
     return "";
   }
 
  private:
-
   [[nodiscard]] std::string GetTokenPieceSpm(llama_token token);
   [[nodiscard]] std::string GetTokenPieceBpe(llama_token token);
 
