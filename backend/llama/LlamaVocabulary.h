@@ -12,7 +12,11 @@ namespace muton::playground::llm {
 
 class LlamaVocabulary {
  public:
-  static LlamaVocabulary FromGguf(std::string const &path);
+  static LlamaVocabulary FromGguf(std::string const& path);
+
+  [[nodiscard]] enum llama_vocab_type GetType() const {
+    return type_;
+  }
 
   [[nodiscard]] size_t GetSize() const {
     return size_;
@@ -30,13 +34,8 @@ class LlamaVocabulary {
     return tokens_type_[token];
   }
 
-  [[nodiscard]] int GetMergeRank(std::string_view str, size_t split) {
-    auto it = merge_ranks_.find(str);
-    if (it == merge_ranks_.end()) {
-      return -1;
-    }
-    // will return -1 when cannot merge
-    return it->second[split] - 1;
+  [[nodiscard]] std::vector<std::string> const& GetMerges() {
+    return merges_;
   }
 
   [[nodiscard]] std::string GetTokenPiece(llama_token token) {
@@ -53,19 +52,6 @@ class LlamaVocabulary {
   [[nodiscard]] std::string GetTokenPieceSpm(llama_token token);
   [[nodiscard]] std::string GetTokenPieceBpe(llama_token token);
 
-  struct string_hash {
-    using is_transparent = void;
-    [[nodiscard]] size_t operator()(const char *txt) const {
-      return std::hash<std::string_view>{}(txt);
-    }
-    [[nodiscard]] size_t operator()(std::string_view txt) const {
-      return std::hash<std::string_view>{}(txt);
-    }
-    [[nodiscard]] size_t operator()(const std::string &txt) const {
-      return std::hash<std::string>{}(txt);
-    }
-  };
-
   enum llama_vocab_type type_;
   size_t size_{};
 
@@ -73,9 +59,7 @@ class LlamaVocabulary {
   std::vector<float> tokens_score_;
   std::vector<enum llama_token_type> tokens_type_;
 
-  // Keys represent merged strings, while values are ranks indexed by the length of the first part of the merged string.
-  // In the associated vector, 0 indicates cannot merge, while values > 0 represent actual rank values.
-  std::unordered_map<std::string, std::vector<int>, string_hash, std::equal_to<>> merge_ranks_;
+  std::vector<std::string> merges_;
 
   std::vector<char> tokens_text_store_;
 };

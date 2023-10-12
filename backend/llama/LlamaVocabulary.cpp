@@ -127,39 +127,14 @@ LlamaVocabulary LlamaVocabulary::FromGguf(std::string const& path) {
     tokens_store_offset += tokens_strlen[i] + 1;
   }
 
-  // For GPT2 tokenizers, we need a merges array
+  // For GPT2 tokenizers, we also has merges
   if (strcmp(model_str, "gpt2") == 0) {
     auto merges_id = ctx.MustGetKeyId("tokenizer.ggml.merges", GGUF_TYPE_ARRAY, GGUF_TYPE_STRING);
     if (merges_id >= 0) {
       auto merges_size = gguf_get_arr_n(ctx, merges_id);
       for (size_t i = 0; i < merges_size; ++i) {
         char const* merge = gguf_get_arr_str(ctx, merges_id, static_cast<int>(i));
-        char const* space = strchr(merge + 1, ' ');
-        if (space == nullptr) {
-          throw std::runtime_error(std::string().append("invalid merge specification: ").append(merge));
-        }
-        std::string key;
-        key.reserve(strlen(merge));
-        for (auto symbol : UTF8Text(std::string_view(merge, space))) {
-          if (symbol.cp == 256 + ' ') {
-            key.push_back(' ');
-          } else if (symbol.cp == 256 + '\n') {
-            key.push_back('\n');
-          } else {
-            key.append(symbol.str);
-          }
-        }
-        size_t split = key.size();
-        for (auto symbol : UTF8Text(std::string_view(space + 1))) {
-          if (symbol.cp == 256 + ' ') {
-            key.push_back(' ');
-          } else if (symbol.cp == 256 + '\n') {
-            key.push_back('\n');
-          } else {
-            key.append(symbol.str);
-          }
-        }
-        result.merge_ranks_.try_emplace(key, key.size()).first->second[split] = static_cast<int>(i) + 1;
+        result.merges_.emplace_back(merge);
       }
     }
   }

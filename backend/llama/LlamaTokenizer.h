@@ -61,6 +61,23 @@ class LlamaTokenizer {
 
   std::vector<std::string> pieces_;
   std::unordered_map<std::string_view, llama_token> pieces_mapping_;
+
+  struct string_hash {
+    using is_transparent = void;
+    [[nodiscard]] size_t operator()(const char* txt) const {
+      return std::hash<std::string_view>{}(txt);
+    }
+    [[nodiscard]] size_t operator()(std::string_view txt) const {
+      return std::hash<std::string_view>{}(txt);
+    }
+    [[nodiscard]] size_t operator()(const std::string& txt) const {
+      return std::hash<std::string>{}(txt);
+    }
+  };
+
+  // Keys represent merged strings, while values are ranks indexed by the length of the first part of the merged string.
+  // In the associated vector, 0 indicates cannot merge, while values > 0 represent actual rank values.
+  std::unordered_map<std::string, std::vector<int>, string_hash, std::equal_to<>> merge_ranks_;
 };
 
 }  // namespace muton::playground::llm

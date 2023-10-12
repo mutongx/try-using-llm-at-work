@@ -12,6 +12,32 @@ LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) : vocabulary_(model.GetV
     pieces_.push_back(vocabulary_.GetTokenPiece(i));
     pieces_mapping_[pieces_[i]] = i;
   }
+  if (vocabulary_.GetType() == LLAMA_VOCAB_TYPE_BPE) {
+    int rank{0};
+    for (auto const& merge : vocabulary_.GetMerges()) {
+      size_t space = merge.find(' ', 1);
+      if (space == std::string::npos) {
+        throw std::runtime_error(std::string().append("invalid merge specification: ").append(merge));
+      }
+      std::string key;
+      key.reserve(merge.size());
+      size_t split = 0;
+      for (auto symbol : UTF8Text(merge)) {
+        if (symbol.str.data() == merge.data() + space) {
+          split = key.size();
+          continue;
+        }
+        if (symbol.cp == 256 + ' ') {
+          key.push_back(' ');
+        } else if (symbol.cp == 256 + '\n') {
+          key.push_back('\n');
+        } else {
+          key.append(symbol.str);
+        }
+      }
+      merge_ranks_.try_emplace(key, key.size()).first->second[split] = ++rank;
+    }
+  }
 }
 
 LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
