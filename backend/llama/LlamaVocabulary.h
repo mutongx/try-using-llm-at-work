@@ -38,17 +38,14 @@ class LlamaVocabulary {
     return merges_;
   }
 
-  [[nodiscard]] std::string GetTokenPiece(llama_token token) {
-    if (type_ == LLAMA_VOCAB_TYPE_SPM) {
-      return GetTokenPieceSpm(token);
-    }
-    if (type_ == LLAMA_VOCAB_TYPE_BPE) {
-      return GetTokenPieceBpe(token);
-    }
-    return "";
-  }
+  [[nodiscard]] std::string DecodeText(std::string_view text);
+
+  [[nodiscard]] std::string GetTokenPiece(llama_token token);
 
  private:
+  [[nodiscard]] static std::string DecodeTextSpm(std::string_view text);
+  [[nodiscard]] static std::string DecodeTextBpe(std::string_view text);
+
   [[nodiscard]] std::string GetTokenPieceSpm(llama_token token);
   [[nodiscard]] std::string GetTokenPieceBpe(llama_token token);
 

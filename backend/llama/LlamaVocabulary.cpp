@@ -142,21 +142,85 @@ LlamaVocabulary LlamaVocabulary::FromGguf(std::string const& path) {
   return result;
 }
 
+std::string LlamaVocabulary::DecodeText(std::string_view text) {
+  if (type_ == LLAMA_VOCAB_TYPE_SPM) {
+    return DecodeTextSpm(text);
+  }
+  if (type_ == LLAMA_VOCAB_TYPE_BPE) {
+    return DecodeTextBpe(text);
+  }
+  throw std::runtime_error("should never reach this");
+}
+
+std::string LlamaVocabulary::GetTokenPiece(llama_token token) {
+  if (type_ == LLAMA_VOCAB_TYPE_SPM) {
+    return GetTokenPieceSpm(token);
+  }
+  if (type_ == LLAMA_VOCAB_TYPE_BPE) {
+    return GetTokenPieceBpe(token);
+  }
+  throw std::runtime_error("should never reach this");
+}
+
+std::string LlamaVocabulary::DecodeTextSpm(std::string_view text) {
+  std::string result;
+  size_t i = 0;
+  while (i < text.size()) {
+    // Space is unicode LOWER ONE EIGHTH BLOCK
+    if (text[i] == '\xe2' && (i + 1 < text.size() && text[i + 1] == '\x96') &&
+        (i + 2 < text.size() && text[i + 2] == '\x81')) {
+      result.push_back(' ');
+      i += 3;
+    } else {
+      result.push_back(text[i]);
+      i += 1;
+    }
+  }
+  return result;
+}
+
+std::string LlamaVocabulary::DecodeTextBpe(std::string_view text) {
+  class BpeByteMap {
+   public:
+    BpeByteMap() : byte_map_(512, 0), set_mask_(512, 0) {
+      size_t invisible{0};
+      uint8_t current{0};
+      do {
+        // See https://github.com/karpathy/minGPT/blob/master/mingpt/bpe.py for detailed explanations
+        // ChatGPT: In summary, OpenAI maps every byte from 0 to 255 to Unicode characters, some of which are preserved
+        // while others are shifted to new characters to ensure they appear visually pleasing in the final dictionary.
+        if (33 <= current && current <= 126 || 161 <= current && current <= 172 || 174 <= current && current <= 255) {
+          byte_map_[current] = current;
+          set_mask_[current] = 1;
+        } else {
+          byte_map_[invisible + 256] = current;
+          set_mask_[invisible + 256] = 1;
+          ++invisible;
+        }
+      } while (current++ != 255);
+    }
+    char Get(uint32_t cp) {
+      if (set_mask_[cp] == 0) {
+        throw std::runtime_error("invalid code page");
+      }
+      return static_cast<char>(byte_map_[cp]);
+    }
+
+   private:
+    std::vector<uint8_t> byte_map_;
+    std::vector<uint8_t> set_mask_;
+  };
+  static BpeByteMap byte_map;
+  std::string result;
+  for (auto symbol : UTF8Text(text)) {
+    result.push_back(byte_map.Get(symbol.cp));
+  }
+  return result;
+}
+
 std::string LlamaVocabulary::GetTokenPieceSpm(llama_token token) {
   if (tokens_type_[token] == LLAMA_TOKEN_TYPE_NORMAL) {
-    std::string result;
-    auto const* p = tokens_text_[token].data();
-    while (*p != 0) {
-      // Space is unicode LOWER ONE EIGHTH BLOCK
-      if (*p == '\xe2' && *(p + 1) != 0 && *(p + 1) == '\x96' && *(p + 2) != 0 && *(p + 2) == '\x81') {
-        result.push_back(' ');
-        p += 3;
-      } else {
-        result.push_back(*p);
-        ++p;
-      }
-    }
-    return result;
+    return DecodeTextSpm(tokens_text_[token]);
   }
   if (tokens_type_[token] == LLAMA_TOKEN_TYPE_UNKNOWN) {
     return "\xe2\x96\x85";
@@ -190,43 +254,8 @@ std::string LlamaVocabulary::GetTokenPieceSpm(llama_token token) {
 }
 
 std::string LlamaVocabulary::GetTokenPieceBpe(llama_token token) {
-  class BpeByteMap {
-   public:
-    BpeByteMap() : byte_map_(512, 0), set_mask_(512, 0) {
-      size_t invisible{0};
-      uint8_t current{0};
-      do {
-        // See https://github.com/karpathy/minGPT/blob/master/mingpt/bpe.py for detailed explanations
-        // ChatGPT: In summary, OpenAI maps every byte from 0 to 255 to Unicode characters, some of which are preserved
-        // while others are shifted to new characters to ensure they appear visually pleasing in the final dictionary.
-        if (33 <= current && current <= 126 || 161 <= current && current <= 172 || 174 <= current && current <= 255) {
-          byte_map_[current] = current;
-          set_mask_[current] = 1;
-        } else {
-          byte_map_[invisible + 256] = current;
-          set_mask_[invisible + 256] = 1;
-          ++invisible;
-        }
-      } while (current++ != 255);
-    }
-    char Get(uint32_t cp) {
-      if (set_mask_[cp] == 0) {
-        throw std::runtime_error("invalid code page");
-      }
-      return static_cast<char>(byte_map_[cp]);
-    }
-
-   private:
-    std::vector<uint8_t> byte_map_;
-    std::vector<uint8_t> set_mask_;
-  };
-  static BpeByteMap byte_map;
   if (tokens_type_[token] == LLAMA_TOKEN_TYPE_NORMAL) {
-    std::string result;
-    for (auto symbol : UTF8Text(tokens_text_[token])) {
-      result.push_back(byte_map.Get(symbol.cp));
-    }
-    return result;
+    return DecodeTextBpe(tokens_text_[token]);
   }
   if (tokens_type_[token] == LLAMA_TOKEN_TYPE_CONTROL) {
     return "";
