@@ -45,21 +45,8 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
 
 LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeSpm(std::string_view text) {
   TokenizeResult result;
-  TokenStorage tokens;
+  TokenStorage tokens{SeparateUTF8(text)};
   SpmBigramQueue queue;
-  {
-    TokenIndex index{0};
-    for (auto symbol : UTF8Text(text)) {
-      auto& item = tokens.emplace_back();
-      item.prev = index - 1;
-      item.next = index + 1;
-      item.str = symbol.str;
-      ++index;
-    }
-  }
-  if (!tokens.empty()) {
-    tokens.back().next = -1;
-  }
   for (TokenIndex i = 1; i < tokens.size(); ++i) {
     TryAddSpmBigram(queue, tokens, i - 1, i);
   }
@@ -114,17 +101,8 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeBpe(std::string_view text
   TokenizeResult result;
   std::vector<TokenStorage> all_tokens;
   for (auto component : bpe_split_regex_.Match(text)) {
-    TokenStorage& tokens{all_tokens.emplace_back()};
+    TokenStorage tokens{SeparateByte(component)};
     BpeBigramQueue queue;
-    for (TokenIndex index = 0; index < component.size(); ++index) {
-      auto& item = tokens.emplace_back();
-      item.prev = index - 1;
-      item.next = index + 1;
-      item.str = std::string_view(component.data() + index, 1);
-    }
-    if (!tokens.empty()) {
-      tokens.back().next = -1;
-    }
     for (TokenIndex i = 1; i < tokens.size(); ++i) {
       TryAddBpeBigram(queue, tokens, i - 1, i);
     }
@@ -149,6 +127,7 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeBpe(std::string_view text
       TryAddBpeBigram(queue, tokens, sym_left.prev, item.left);
       TryAddBpeBigram(queue, tokens, item.left, sym_left.next);
     }
+    all_tokens.emplace_back(std::move(tokens));
   }
   for (auto const& tokens : all_tokens) {
     if (tokens.empty()) {
@@ -175,6 +154,36 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeBpe(std::string_view text
         result.size += 1;
       }
     }
+  }
+  return result;
+}
+
+LlamaTokenizer::TokenStorage LlamaTokenizer::SeparateUTF8(std::string_view text) {
+  TokenStorage result;
+  TokenIndex index{0};
+  for (auto symbol : UTF8Text(text)) {
+    auto& item = result.emplace_back();
+    item.prev = index - 1;
+    item.next = index + 1;
+    item.str = symbol.str;
+    ++index;
+  }
+  if (!result.empty()) {
+    result.back().next = -1;
+  }
+  return result;
+}
+
+LlamaTokenizer::TokenStorage LlamaTokenizer::SeparateByte(std::string_view text) {
+  TokenStorage result;
+  for (TokenIndex index = 0; index < text.size(); ++index) {
+    auto& item = result.emplace_back();
+    item.prev = index - 1;
+    item.next = index + 1;
+    item.str = std::string_view(text.data() + index, 1);
+  }
+  if (!result.empty()) {
+    result.back().next = -1;
   }
   return result;
 }

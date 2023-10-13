@@ -40,6 +40,10 @@ class LlamaTokenizer {
     std::string_view str{};
   };
   using TokenStorage = std::vector<Token>;
+
+  static TokenStorage SeparateUTF8(std::string_view text);
+  static TokenStorage SeparateByte(std::string_view text);
+
   struct Bigram {
     TokenIndex left{};
     TokenIndex right{};
