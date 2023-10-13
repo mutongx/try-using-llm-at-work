@@ -16,6 +16,7 @@
 #include "utilities/RegExp.h"
 
 namespace muton::playground::llm {
+
 class LlamaTokenizer {
  public:
   LlamaTokenizer(LlamaModel const& model);
