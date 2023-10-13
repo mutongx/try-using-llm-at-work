@@ -15,26 +15,14 @@ LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) : vocabulary_(model.GetV
   if (vocabulary_.GetType() == LLAMA_VOCAB_TYPE_BPE) {
     int rank{0};
     for (auto const& merge : vocabulary_.GetMerges()) {
-      size_t space = merge.find(' ', 1);
-      if (space == std::string::npos) {
+      size_t space = merge.find(' ');
+      if (space == 0 || space == std::string::npos) {
         throw std::runtime_error(std::string().append("invalid merge specification: ").append(merge));
       }
       std::string key;
-      key.reserve(merge.size());
-      size_t split = 0;
-      for (auto symbol : UTF8Text(merge)) {
-        if (symbol.str.data() == merge.data() + space) {
-          split = key.size();
-          continue;
-        }
-        if (symbol.cp == 256 + ' ') {
-          key.push_back(' ');
-        } else if (symbol.cp == 256 + '\n') {
-          key.push_back('\n');
-        } else {
-          key.append(symbol.str);
-        }
-      }
+      key.append(vocabulary_.DecodeText(std::string_view(merge.data(), space)));
+      size_t split{key.size()};
+      key.append(vocabulary_.DecodeText(std::string_view(merge.data() + space + 1)));
       merge_ranks_.try_emplace(key, key.size()).first->second[split] = ++rank;
     }
   }
