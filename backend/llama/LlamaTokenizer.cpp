@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <string_view>
 
+#include <fmt/format.h>
+
 #include "utilities/RegExp.h"
 #include "utilities/UTF8Text.h"
 
@@ -12,23 +14,47 @@ static auto const* bpe_split_pattern = R"('s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{
 
 LlamaTokenizer::LlamaTokenizer(const LlamaModel& model)
     : vocabulary_(model.GetVocabulary()), bpe_split_regex_(bpe_split_pattern) {
-  pieces_.reserve(vocabulary_.GetSize());
+  // Create a piece -> token and byte -> token mapping
+  auto vocab_type = vocabulary_.GetType();
+  byte_token_mapping_.resize(256, -1);
   for (int i = 0; i < vocabulary_.GetSize(); ++i) {
-    pieces_.push_back(vocabulary_.GetTokenPiece(i));
-    pieces_mapping_[pieces_[i]] = i;
+    auto type = vocabulary_.GetTokenType(i);
+    auto piece = vocabulary_.GetTokenPiece(i);
+    if (type == LLAMA_TOKEN_TYPE_NORMAL) {
+      auto emplace = pieces_mapping_.try_emplace(std::move(piece), i);
+      if (!emplace.second) {
+        throw std::runtime_error(fmt::format("duplicate token piece: {}/{}", emplace.first->second, i));
+      }
+      // For BPE tokenizer, we also use piece as byte token
+      if (vocab_type == LLAMA_VOCAB_TYPE_BPE && piece.size() == 1) {
+        auto byte = static_cast<uint8_t>(piece[0]);
+        byte_token_mapping_[byte] = i;
+      }
+    } else if (type == LLAMA_TOKEN_TYPE_BYTE) {
+      if (vocab_type == LLAMA_VOCAB_TYPE_BPE) {
+        throw std::runtime_error("unexpected byte token in BPE vocabulary");
+      }
+      auto byte = static_cast<uint8_t>(piece[0]);
+      byte_token_mapping_[byte] = i;
+    }
   }
-  if (vocabulary_.GetType() == LLAMA_VOCAB_TYPE_BPE) {
+  // Create a merge -> merge pos -> rank mapping
+  if (vocab_type == LLAMA_VOCAB_TYPE_BPE) {
     int rank{0};
     for (auto const& merge : vocabulary_.GetMerges()) {
       size_t space = merge.find(' ');
       if (space == 0 || space == std::string::npos) {
-        throw std::runtime_error(std::string().append("invalid merge specification: ").append(merge));
+        throw std::runtime_error(fmt::format("invalid merge specification: {}", merge));
       }
+      // Remove the space, and decode byte representation to bytes
       std::string key;
+      key.reserve(merge.size());
       key.append(vocabulary_.DecodeText(std::string_view(merge.data(), space)));
       size_t split{key.size()};
       key.append(vocabulary_.DecodeText(std::string_view(merge.data() + space + 1)));
-      merge_ranks_.try_emplace(key, key.size()).first->second[split] = ++rank;
+      size_t total{key.size()};
+      // Use merges_ as a storage, and use string_view as key in merge_ranks_
+      merge_ranks_.try_emplace(std::move(key), total).first->second[split] = ++rank;
     }
   }
 }
@@ -80,7 +106,11 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeSpm(std::string_view text
       auto token_it = pieces_mapping_.find(item.str);
       if (token_it == pieces_mapping_.end()) {
         for (size_t i = 0; i < item.str.size(); ++i) {
-          auto token_id = pieces_mapping_.at(std::string_view(item.str.data() + i, 1));
+          auto byte = static_cast<uint8_t>(item.str[i]);
+          auto token_id = byte_token_mapping_[byte];
+          if (token_id == -1) {
+            throw std::runtime_error(fmt::format("cannot find byte token for {}", byte));
+          }
           result.token_id.push_back(token_id);
           result.token_pos.push_back(item.str.data() + i - text.data());
           result.token_size.push_back(1);
@@ -141,7 +171,11 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeBpe(std::string_view text
       auto token_it = pieces_mapping_.find(item.str);
       if (token_it == pieces_mapping_.end()) {
         for (size_t i = 0; i < item.str.size(); ++i) {
-          auto token_id = pieces_mapping_.at(std::string_view(item.str.data() + i, 1));
+          auto byte = static_cast<uint8_t>(item.str[i]);
+          auto token_id = byte_token_mapping_[byte];
+          if (token_id == -1) {
+            throw std::runtime_error(fmt::format("cannot find byte token for {}", byte));
+          }
           result.token_id.push_back(token_id);
           result.token_pos.push_back(item.str.data() + i - text.data());
           result.token_size.push_back(1);

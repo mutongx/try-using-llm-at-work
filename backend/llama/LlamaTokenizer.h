@@ -71,9 +71,6 @@ class LlamaTokenizer {
   LlamaVocabulary vocabulary_;
   RegExp bpe_split_regex_;
 
-  std::vector<std::string> pieces_;
-  std::unordered_map<std::string_view, llama_token> pieces_mapping_;
-
   struct string_hash {
     using is_transparent = void;
     [[nodiscard]] size_t operator()(const char* txt) const {
@@ -86,6 +83,9 @@ class LlamaTokenizer {
       return std::hash<std::string>{}(txt);
     }
   };
+
+  std::unordered_map<std::string, llama_token, string_hash, std::equal_to<>> pieces_mapping_;
+  std::vector<llama_token> byte_token_mapping_;
 
   // Keys represent merged strings, while values are ranks indexed by the length of the first part of the merged string.
   // In the associated vector, 0 indicates cannot merge, while values > 0 represent actual rank values.
