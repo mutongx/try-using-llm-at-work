@@ -30,8 +30,7 @@ class LlamaTokenizer {
   [[nodiscard]] TokenizeResult Tokenize(std::string_view text);
 
  private:
-  [[nodiscard]] TokenizeResult TokenizeSpm(std::string_view text);
-  [[nodiscard]] TokenizeResult TokenizeBpe(std::string_view text);
+  // Internal struct definition
 
   using TokenIndex = int;
   struct Token {
@@ -40,9 +39,6 @@ class LlamaTokenizer {
     std::string_view str{};
   };
   using TokenStorage = std::vector<Token>;
-
-  static TokenStorage SeparateUTF8(std::string_view text);
-  static TokenStorage SeparateByte(std::string_view text);
 
   struct Bigram {
     TokenIndex left{};
@@ -65,11 +61,18 @@ class LlamaTokenizer {
   using SpmBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, SpmBigramCompare>;
   using BpeBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, BpeBigramCompare>;
 
+  // Function Definition
+
+  [[nodiscard]] static TokenStorage SeparateUTF8(std::string_view text);
+  [[nodiscard]] static TokenStorage SeparateByte(std::string_view text);
+
+  [[nodiscard]] TokenizeResult TokenizeSpm(std::string_view text);
+  [[nodiscard]] TokenizeResult TokenizeBpe(std::string_view text);
+
   void TryAddSpmBigram(SpmBigramQueue& queue, TokenStorage const& tokens, TokenIndex left, TokenIndex right);
   void TryAddBpeBigram(BpeBigramQueue& queue, TokenStorage const& tokens, TokenIndex left, TokenIndex right);
 
-  LlamaVocabulary vocabulary_;
-  RegExp bpe_split_regex_;
+  // Member Definition
 
   struct string_hash {
     using is_transparent = void;
@@ -83,6 +86,9 @@ class LlamaTokenizer {
       return std::hash<std::string>{}(txt);
     }
   };
+
+  LlamaVocabulary vocabulary_;
+  RegExp bpe_split_regex_;
 
   std::unordered_map<std::string, llama_token, string_hash, std::equal_to<>> pieces_mapping_;
   std::vector<llama_token> byte_token_mapping_;

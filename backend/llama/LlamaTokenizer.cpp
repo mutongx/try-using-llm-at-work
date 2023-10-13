@@ -69,6 +69,36 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
   throw std::runtime_error("invalid vocabulary type");
 }
 
+LlamaTokenizer::TokenStorage LlamaTokenizer::SeparateUTF8(std::string_view text) {
+  TokenStorage result;
+  TokenIndex index{0};
+  for (auto symbol : UTF8Text(text)) {
+    auto& item = result.emplace_back();
+    item.prev = index - 1;
+    item.next = index + 1;
+    item.str = symbol.str;
+    ++index;
+  }
+  if (!result.empty()) {
+    result.back().next = -1;
+  }
+  return result;
+}
+
+LlamaTokenizer::TokenStorage LlamaTokenizer::SeparateByte(std::string_view text) {
+  TokenStorage result;
+  for (TokenIndex index = 0; index < text.size(); ++index) {
+    auto& item = result.emplace_back();
+    item.prev = index - 1;
+    item.next = index + 1;
+    item.str = std::string_view(text.data() + index, 1);
+  }
+  if (!result.empty()) {
+    result.back().next = -1;
+  }
+  return result;
+}
+
 LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeSpm(std::string_view text) {
   TokenizeResult result;
   TokenStorage tokens{SeparateUTF8(text)};
@@ -188,36 +218,6 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::TokenizeBpe(std::string_view text
         result.size += 1;
       }
     }
-  }
-  return result;
-}
-
-LlamaTokenizer::TokenStorage LlamaTokenizer::SeparateUTF8(std::string_view text) {
-  TokenStorage result;
-  TokenIndex index{0};
-  for (auto symbol : UTF8Text(text)) {
-    auto& item = result.emplace_back();
-    item.prev = index - 1;
-    item.next = index + 1;
-    item.str = symbol.str;
-    ++index;
-  }
-  if (!result.empty()) {
-    result.back().next = -1;
-  }
-  return result;
-}
-
-LlamaTokenizer::TokenStorage LlamaTokenizer::SeparateByte(std::string_view text) {
-  TokenStorage result;
-  for (TokenIndex index = 0; index < text.size(); ++index) {
-    auto& item = result.emplace_back();
-    item.prev = index - 1;
-    item.next = index + 1;
-    item.str = std::string_view(text.data() + index, 1);
-  }
-  if (!result.empty()) {
-    result.back().next = -1;
   }
   return result;
 }
