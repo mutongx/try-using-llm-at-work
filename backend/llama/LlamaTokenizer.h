@@ -13,6 +13,8 @@
 #include "LlamaModel.h"
 #include "LlamaVocabulary.h"
 
+#include "utilities/RegExp.h"
+
 namespace muton::playground::llm {
 class LlamaTokenizer {
  public:
@@ -24,9 +26,13 @@ class LlamaTokenizer {
     std::vector<size_t> token_pos;
     std::vector<size_t> token_size;
   };
+
   [[nodiscard]] TokenizeResult Tokenize(std::string_view text);
 
  private:
+  [[nodiscard]] TokenizeResult TokenizeSpm(std::string_view text);
+  [[nodiscard]] TokenizeResult TokenizeBpe(std::string_view text);
+
   using TokenIndex = int;
   struct Token {
     TokenIndex prev{};
@@ -56,8 +62,10 @@ class LlamaTokenizer {
   using BpeBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, BpeBigramCompare>;
 
   void TryAddSpmBigram(SpmBigramQueue& queue, TokenStorage const& tokens, TokenIndex left, TokenIndex right);
+  void TryAddBpeBigram(BpeBigramQueue& queue, TokenStorage const& tokens, TokenIndex left, TokenIndex right);
 
   LlamaVocabulary vocabulary_;
+  RegExp bpe_split_regex_;
 
   std::vector<std::string> pieces_;
   std::unordered_map<std::string_view, llama_token> pieces_mapping_;
