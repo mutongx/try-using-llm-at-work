@@ -57,6 +57,9 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
         (sym_left.str.size() + sym_right.str.size() != item.str.size())) {
       continue;
     }
+    if (sym_left.str.data() + sym_left.str.size() != sym_right.str.data()) {
+      throw std::runtime_error("something is wrong in token merge");
+    }
     sym_left.str = std::string_view(sym_left.str.data(), sym_left.str.size() + sym_right.str.size());
     sym_right.str = std::string_view("");
     sym_left.next = sym_right.next;
