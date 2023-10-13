@@ -30,27 +30,29 @@ LlamaTokenizer::LlamaTokenizer(const LlamaModel& model) : vocabulary_(model.GetV
 
 LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
   TokenizeResult result;
+  TokenStorage tokens;
   SpmBigramQueue queue;
-  SymbolStorage symbols;
-  TokenIndex index{0};
-  for (auto symbol : UTF8Text(text)) {
-    auto& item = symbols.emplace_back();
-    item.prev = index - 1;
-    item.next = index + 1;
-    item.str = symbol.str;
-    ++index;
+  {
+    TokenIndex index{0};
+    for (auto symbol : UTF8Text(text)) {
+      auto& item = tokens.emplace_back();
+      item.prev = index - 1;
+      item.next = index + 1;
+      item.str = symbol.str;
+      ++index;
+    }
   }
-  if (!symbols.empty()) {
-    symbols.back().next = -1;
+  if (!tokens.empty()) {
+    tokens.back().next = -1;
   }
-  for (TokenIndex i = 1; i < symbols.size(); ++i) {
-    TryAddSpmBigram(queue, symbols, i - 1, i);
+  for (TokenIndex i = 1; i < tokens.size(); ++i) {
+    TryAddSpmBigram(queue, tokens, i - 1, i);
   }
   while (!queue.empty()) {
     auto item = queue.top();
     queue.pop();
-    auto& sym_left = symbols[item.left];
-    auto& sym_right = symbols[item.right];
+    auto& sym_left = tokens[item.left];
+    auto& sym_right = tokens[item.right];
     if (sym_left.str.empty() || sym_right.str.empty() ||
         (sym_left.str.size() + sym_right.str.size() != item.str.size())) {
       continue;
@@ -59,14 +61,17 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
     sym_right.str = std::string_view("");
     sym_left.next = sym_right.next;
     if (sym_right.next >= 0) {
-      symbols[sym_right.next].prev = item.left;
+      tokens[sym_right.next].prev = item.left;
     }
-    TryAddSpmBigram(queue, symbols, sym_left.prev, item.left);
-    TryAddSpmBigram(queue, symbols, item.left, sym_left.next);
+    TryAddSpmBigram(queue, tokens, sym_left.prev, item.left);
+    TryAddSpmBigram(queue, tokens, item.left, sym_left.next);
   }
-  if (!symbols.empty()) {
-    for (index = 0; index != -1; index = symbols[index].next) {
-      auto& item = symbols[index];
+  if (!tokens.empty()) {
+    for (TokenIndex index = 0; index != -1; index = tokens[index].next) {
+      auto const& item = tokens[index];
+      if (item.str.empty()) {
+        continue;
+      }
       auto token_it = pieces_mapping_.find(item.str);
       if (token_it == pieces_mapping_.end()) {
         for (size_t i = 0; i < item.str.size(); ++i) {
@@ -88,19 +93,19 @@ LlamaTokenizer::TokenizeResult LlamaTokenizer::Tokenize(std::string_view text) {
 }
 
 void LlamaTokenizer::TryAddSpmBigram(SpmBigramQueue& queue,
-                                     SymbolStorage const& symbols,
+                                     TokenStorage const& tokens,
                                      TokenIndex left,
                                      TokenIndex right) {
   if (left == -1 || right == -1) {
     return;
   }
-  auto symbol = std::string_view(symbols[left].str.data(), symbols[left].str.size() + symbols[right].str.size());
-  auto token_it = pieces_mapping_.find(symbol);
+  auto str = std::string_view(tokens[left].str.data(), tokens[left].str.size() + tokens[right].str.size());
+  auto token_it = pieces_mapping_.find(str);
   if (token_it == pieces_mapping_.end()) {
     return;
   }
   auto score = vocabulary_.GetTokenScore(token_it->second);
-  queue.emplace(Bigram{.left = left, .right = right, .score = score, .str = symbol});
+  queue.emplace(Bigram{.left = left, .right = right, .score = score, .str = str});
 }
 
 }  // namespace muton::playground::llm

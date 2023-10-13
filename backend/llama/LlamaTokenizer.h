@@ -28,12 +28,12 @@ class LlamaTokenizer {
 
  private:
   using TokenIndex = int;
-  struct Symbol {
+  struct Token {
     TokenIndex prev{};
     TokenIndex next{};
     std::string_view str{};
   };
-  using SymbolStorage = std::vector<Symbol>;
+  using TokenStorage = std::vector<Token>;
   struct Bigram {
     TokenIndex left{};
     TokenIndex right{};
@@ -55,7 +55,7 @@ class LlamaTokenizer {
   using SpmBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, SpmBigramCompare>;
   using BpeBigramQueue = std::priority_queue<Bigram, std::vector<Bigram>, BpeBigramCompare>;
 
-  void TryAddSpmBigram(SpmBigramQueue& queue, SymbolStorage const& symbols, TokenIndex left, TokenIndex right);
+  void TryAddSpmBigram(SpmBigramQueue& queue, TokenStorage const& tokens, TokenIndex left, TokenIndex right);
 
   LlamaVocabulary vocabulary_;
 
