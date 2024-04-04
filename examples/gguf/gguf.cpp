@@ -1,5 +1,4 @@
 #include "ggml.h"
-#include "llama.h"
 
 #include <cstdio>
 #include <cinttypes>
@@ -195,7 +194,7 @@ static bool gguf_ex_read_1(const std::string & fname) {
 
             struct ggml_tensor * cur = ggml_get_tensor(ctx_data, name);
 
-            printf("%s: tensor[%d]: n_dims = %d, name = %s, data = %p\n", __func__, i, cur->n_dims, cur->name, cur->data);
+            printf("%s: tensor[%d]: n_dims = %d, name = %s, data = %p\n", __func__, i, ggml_n_dims(cur), cur->name, cur->data);
 
             // print first 10 elements
             const float * data = (const float *) cur->data;
@@ -212,6 +211,7 @@ static bool gguf_ex_read_1(const std::string & fname) {
                 for (int j = 0; j < ggml_nelements(cur); ++j) {
                     if (data[j] != 100 + i) {
                         fprintf(stderr, "%s: tensor[%d]: data[%d] = %f\n", __func__, i, j, data[j]);
+                        gguf_free(ctx);
                         return false;
                     }
                 }
