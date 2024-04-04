@@ -17,9 +17,9 @@ TEST_CASE("The vocabulary is the same as llama.cpp's original implementation", "
   // Compare vocabulary with llama.cpp
   REQUIRE(vocab.GetSize() == llama_n_vocab(model.Get()));
   for (size_t i = 0; i < vocab.GetSize(); ++i) {
-    REQUIRE(vocab.GetTokenText(i) == llama_token_get_text(context.Get(), i));
-    REQUIRE(vocab.GetTokenScore(i) == llama_token_get_score(context.Get(), i));
-    REQUIRE(vocab.GetTokenType(i) == llama_token_get_type(context.Get(), i));
+    REQUIRE(vocab.GetTokenText(i) == llama_token_get_text(model.Get(), i));
+    REQUIRE(vocab.GetTokenScore(i) == llama_token_get_score(model.Get(), i));
+    REQUIRE(vocab.GetTokenType(i) == llama_token_get_type(model.Get(), i));
     std::string piece;
     piece.resize(-llama_token_to_piece(model.Get(), i, nullptr, 0));
     llama_token_to_piece(model.Get(), i, piece.data(), piece.size());

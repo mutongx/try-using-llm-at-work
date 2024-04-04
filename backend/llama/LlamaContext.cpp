@@ -7,26 +7,7 @@ namespace muton::playground::llm {
 LlamaContext::LlamaContext(LlamaParams const& params, LlamaModel const& model)
     : context_size_(params.GetContextParams().n_ctx),
       tokens_(context_size_, 0),
-      tokens_pos_(context_size_, 0),
-      tokens_seq_id_(context_size_, 0),
       context_(llama_new_context_with_model(model.Get(), params.GetContextParams())) {}
-
-llama_token LlamaContext::GetBos() const {
-  return llama_token_bos(context_);
-}
-
-llama_token LlamaContext::GetEos() const {
-  return llama_token_eos(context_);
-}
-bool LlamaContext::FeedBos() {
-  auto bos = llama_token_bos(context_);
-  return Feed(std::span<llama_token>(&bos, 1));
-}
-
-bool LlamaContext::FeedEos() {
-  auto eos = llama_token_eos(context_);
-  return Feed(std::span<llama_token>(&eos, 1));
-}
 
 bool LlamaContext::Feed(llama_token token_pending) {
   return Feed(std::span<llama_token>(&token_pending, 1));
@@ -37,9 +18,6 @@ bool LlamaContext::Feed(std::span<llama_token> tokens_pending) {
     return false;
   }
   memcpy(tokens_.data() + tokens_size_, tokens_pending.data(), tokens_pending.size() * sizeof(llama_token));
-  for (size_t i = 0; i < tokens_pending.size(); ++i) {
-    tokens_pos_[i + tokens_size_] = static_cast<llama_pos>(i + tokens_size_);
-  }
   tokens_size_ += tokens_pending.size();
   return true;
 }
@@ -47,12 +25,22 @@ bool LlamaContext::Feed(std::span<llama_token> tokens_pending) {
 ssize_t LlamaContext::Eval(proto::EvalOption::Reader option) {
   size_t to_eval = std::min(tokens_size_ - tokens_eval_, static_cast<size_t>(option.getBatchSize()));
   if (to_eval > 0) {
+    llama_seq_id seq_id_val = 0;
+    std::vector<llama_pos> pos(to_eval);
+    std::vector<int32_t> n_seq_id(to_eval);
+    std::vector<llama_seq_id*> seq_id(to_eval);
+    for (size_t i = 0; i < to_eval; ++i) {
+      pos[i] = tokens_eval_ + i;
+      n_seq_id[i] = 1;
+      seq_id[i] = &seq_id_val;
+    }
     llama_batch batch{
         .n_tokens = static_cast<int32_t>(to_eval),
         .token = tokens_.data() + tokens_eval_,
         .embd = nullptr,
-        .pos = tokens_pos_.data() + tokens_eval_,
-        .seq_id = tokens_seq_id_.data() + tokens_eval_,
+        .pos = pos.data(),
+        .n_seq_id = n_seq_id.data(),
+        .seq_id = seq_id.data(),
         .logits = nullptr,
     };
     if (llama_decode(context_, batch) != 0) {

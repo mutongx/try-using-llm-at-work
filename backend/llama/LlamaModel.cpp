@@ -34,6 +34,14 @@ llama_model *LlamaModel::Get() const {
   return model_;
 }
 
+llama_token LlamaModel::GetBos() const {
+  return llama_token_bos(model_);
+}
+
+llama_token LlamaModel::GetEos() const {
+  return llama_token_eos(model_);
+}
+
 LlamaVocabulary LlamaModel::GetVocabulary() const {
   return LlamaVocabulary::FromGguf(path_);
 }

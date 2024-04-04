@@ -40,7 +40,7 @@ kj::Promise<void> ContextServer::feedBos(proto::Context::Server::FeedBosContext 
   return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
     auto params = context.getParams();
     auto results = context.getResults();
-    auto success = context_.FeedBos();
+    auto success = context_.Feed(model_.GetBos());
     results.setSuccess(success);
     results.setContext(thisCap());
   });
@@ -50,7 +50,7 @@ kj::Promise<void> ContextServer::feedEos(proto::Context::Server::FeedEosContext 
   return kj::READY_NOW.operator kj::Promise<void>().then([this, context]() mutable {
     auto params = context.getParams();
     auto results = context.getResults();
-    auto success = context_.FeedEos();
+    auto success = context_.Feed(model_.GetEos());
     results.setSuccess(success);
     results.setContext(thisCap());
   });
@@ -142,7 +142,7 @@ kj::Promise<void> ContextServer::predictUntilEosInternal(proto::Context::Predict
   } else {
     // Runs predict.
     auto token = context_.Predict(predict_option);
-    if (!context_.Feed(token) || (token == context_.GetEos())) {
+    if (!context_.Feed(token) || (token == model_.GetEos())) {
       // If context is full or token is EOS, stop generating.
       next_request = callback.doneRequest().send().ignoreResult();
     } else {

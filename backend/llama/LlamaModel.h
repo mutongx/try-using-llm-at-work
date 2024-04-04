@@ -23,6 +23,9 @@ class LlamaModel {
 
   [[nodiscard]] llama_model* Get() const;
 
+  [[nodiscard]] llama_token GetBos() const;
+  [[nodiscard]] llama_token GetEos() const;
+
   [[nodiscard]] LlamaVocabulary GetVocabulary() const;
 
  private:

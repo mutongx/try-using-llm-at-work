@@ -28,13 +28,8 @@ class LlamaContext {
     return context_;
   }
 
-  [[nodiscard]] llama_token GetBos() const;
-  [[nodiscard]] llama_token GetEos() const;
-
   [[nodiscard]] bool Feed(llama_token token_pending);
   [[nodiscard]] bool Feed(std::span<llama_token> tokens_pending);
-  [[nodiscard]] bool FeedBos();
-  [[nodiscard]] bool FeedEos();
 
   [[nodiscard]] ssize_t Eval(proto::EvalOption::Reader option);
   [[nodiscard]] llama_token Predict(proto::PredictOption::Reader option);
@@ -43,10 +38,7 @@ class LlamaContext {
 
   size_t context_size_{};
 
-  // For data stored in llama_batch
   std::vector<llama_token> tokens_{};
-  std::vector<llama_pos> tokens_pos_{};
-  std::vector<llama_seq_id> tokens_seq_id_{};
 
   // To track current feed / eval progress
   size_t tokens_begin_{};

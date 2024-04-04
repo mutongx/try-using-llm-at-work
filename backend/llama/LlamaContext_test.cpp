@@ -7,26 +7,6 @@
 #include "llama/LlamaTokenizer.h"
 #include "llama/LlamaVocabulary.h"
 
-TEST_CASE("The model can handle BOS and EOS token correctly", "[llama][context]") {
-  auto config = muton::playground::llm::Config::Read("config-test.json");
-  muton::playground::llm::LlamaParams params(config->getParams());
-  muton::playground::llm::LlamaModel model(config->getModel().cStr(), params);
-  muton::playground::llm::LlamaVocabulary vocabulary{model.GetVocabulary()};
-  muton::playground::llm::LlamaContext context(params, model);
-  SECTION("The model gets the begin of stream token correctly") {
-    // Test cases for LlamaModel::GetBos():
-    // 1. The begin of stream token is <s>.
-    REQUIRE(context.GetBos() == 1);
-    REQUIRE(vocabulary.GetTokenText(context.GetBos()) == "<s>");
-  }
-  SECTION("The model gets the end of stream token correctly") {
-    // Test cases for LlamaModel::GetEos():
-    // 1. The end of stream token is </s>.
-    REQUIRE(context.GetEos() == 2);
-    REQUIRE(vocabulary.GetTokenText(context.GetEos()) == "</s>");
-  }
-}
-
 TEST_CASE("The model maintains (feed, eval, and predict) the context correctly", "[llama][context]") {
   // Build the model (llama-2-7b.Q4_0.gguf).
   // The predict.temperature is 0.0.
@@ -38,7 +18,7 @@ TEST_CASE("The model maintains (feed, eval, and predict) the context correctly",
   muton::playground::llm::LlamaContext context(params, model);
   auto vocab = model.GetVocabulary();
   auto tokens = tokenizer.Tokenize(" When life gives you lemons,");
-  REQUIRE(context.FeedBos() == true);              // Indicates the beginning of a sentence.
+  REQUIRE(context.Feed(model.GetBos()) == true);   // Indicates the beginning of a sentence.
   REQUIRE(context.Feed(tokens.token_id) == true);  // Feed all tokens.
   REQUIRE(context.Eval(config->getEval()) == 0);
   std::vector<std::string> prediction{" make", " le", "mon", "ade", "."};
@@ -61,7 +41,7 @@ TEST_CASE("The model can eval in smaller batch size", "[llama][context]") {
   muton::playground::llm::LlamaContext context(params, model);
   auto vocab = model.GetVocabulary();
   auto tokens = tokenizer.Tokenize(" When life gives you lemons,");
-  REQUIRE(context.FeedBos() == true);              // Indicates the beginning of a sentence.
+  REQUIRE(context.Feed(model.GetBos()) == true);   // Indicates the beginning of a sentence.
   REQUIRE(context.Feed(tokens.token_id) == true);  // Feed all tokens.
   // Override batch size to 1.
   config->getEval().setBatchSize(1);
