@@ -95,46 +95,46 @@ complex specs:
 
   * Full test name, e.g. `"Test 1"`.
 
-This allows only test cases whose name is "Test 1".
+    This allows only test cases whose name is "Test 1".
 
   * Wildcarded test name, e.g. `"*Test"`, or `"Test*"`, or `"*Test*"`.
 
-This allows any test case whose name ends with, starts with, or contains
-in the middle the string "Test". Note that the wildcard can only be at
-the start or end.
+    This allows any test case whose name ends with, starts with, or contains
+    in the middle the string "Test". Note that the wildcard can only be at
+    the start or end.
 
   * Tag name, e.g. `[some-tag]`.
 
-This allows any test case tagged with "[some-tag]". Remember that some
-tags are special, e.g. those that start with "." or with "!".
+    This allows any test case tagged with "[some-tag]". Remember that some
+    tags are special, e.g. those that start with "." or with "!".
 
 
 You can also combine the basic test specs to create more complex test
-specs. You can
+specs. You can:
 
   * Concatenate specs to apply all of them, e.g. `[some-tag][other-tag]`.
 
-This allows test cases that are tagged with **both** "[some-tag]" **and**
-"[other-tag]". A test case with just "[some-tag]" will not pass the filter,
-nor will test case with just "[other-tag]".
+    This allows test cases that are tagged with **both** "[some-tag]" **and**
+    "[other-tag]". A test case with just "[some-tag]" will not pass the filter,
+    nor will test case with just "[other-tag]".
 
   * Comma-join specs to apply any of them, e.g. `[some-tag],[other-tag]`.
 
-This allows test cases that are tagged with **either** "[some-tag]" **or**
-"[other-tag]". A test case with both will obviously also pass the filter.
+    This allows test cases that are tagged with **either** "[some-tag]" **or**
+    "[other-tag]". A test case with both will obviously also pass the filter.
 
-Note that commas take precendence over simple concatenation. This means
-that `[a][b],[c]` accepts tests that are tagged with either both "[a]" and
-"[b]", or tests that are tagged with just "[c]".
+    Note that commas take precendence over simple concatenation. This means
+    that `[a][b],[c]` accepts tests that are tagged with either both "[a]" and
+    "[b]", or tests that are tagged with just "[c]".
 
   * Negate the spec by prepending it with `~`, e.g. `~[some-tag]`.
 
-This rejects any test case that is tagged with "[some-tag]". Note that
-rejection takes precedence over other filters.
+    This rejects any test case that is tagged with "[some-tag]". Note that
+    rejection takes precedence over other filters.
 
-Note that negations always binds to the following _basic_ test spec.
-This means that `~[foo][bar]` negates only the "[foo]" tag and not the
-"[bar]" tag.
+    Note that negations always binds to the following _basic_ test spec.
+    This means that `~[foo][bar]` negates only the "[foo]" tag and not the
+    "[bar]" tag.
 
 Note that when Catch2 is deciding whether to include a test, first it
 checks whether the test matches any negative filters. If it does,
@@ -145,7 +145,7 @@ only tests that match the positive filters are included.
 
 You can also match test names with special characters by escaping them
 with a backslash (`"\"`), e.g. a test named `"Do A, then B"` is matched
-by "Do A\, then B" test spec. Backslash also escapes itself.
+by `"Do A\, then B"` test spec. Backslash also escapes itself.
 
 
 ### Examples
@@ -194,7 +194,8 @@ verbose and human-friendly output.
 
 Reporters are also individually configurable. To pass configuration options
 to the reporter, you append `::key=value` to the reporter specification
-as many times as you want, e.g. `--reporter xml::out=someFile.xml`.
+as many times as you want, e.g. `--reporter xml::out=someFile.xml` or
+`--reporter custom::colour-mode=ansi::Xoption=2`.
 
 The keys must either be prefixed by "X", in which case they are not parsed
 by Catch2 and are only passed down to the reporter, or one of options
@@ -365,14 +366,14 @@ There are currently two warnings implemented:
 ## Reporting timings
 <pre>-d, --durations &lt;yes/no></pre>
 
-When set to ```yes``` Catch will report the duration of each test case, in milliseconds. Note that it does this regardless of whether a test case passes or fails. Note, also, the certain reporters (e.g. Junit) always report test case durations regardless of this option being set or not.
+When set to ```yes``` Catch will report the duration of each test case, in seconds with millisecond precision. Note that it does this regardless of whether a test case passes or fails. Note, also, the certain reporters (e.g. Junit) always report test case durations regardless of this option being set or not.
 
 <pre>-D, --min-duration &lt;value></pre>
 
 > `--min-duration` was [introduced](https://github.com/catchorg/Catch2/pull/1910) in Catch2 2.13.0
 
 When set, Catch will report the duration of each test case that took more
-than &lt;value> seconds, in milliseconds. This option is overridden by both
+than &lt;value> seconds, in seconds with millisecond precision. This option is overridden by both
 `-d yes` and `-d no`, so that either all durations are reported, or none
 are.
 
