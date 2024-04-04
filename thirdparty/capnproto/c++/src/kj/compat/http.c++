@@ -2574,6 +2574,7 @@ public:
     }
 
     bool isFin = recvHeader.isFin();
+    bool isCompressed = false;
 
     kj::Array<byte> message;           // space to allocate
     byte* payloadTarget;               // location into which to read payload (size is payloadLen)
@@ -2584,6 +2585,7 @@ public:
         // Add 4 since we append 0x00 0x00 0xFF 0xFF to the tail of the payload.
         // See: https://datatracker.ietf.org/doc/html/rfc7692#section-7.2.2
         amountToAllocate = payloadLen + 4;
+        isCompressed = true;
       } else {
         // Add space for NUL terminator when allocating text message.
         amountToAllocate = payloadLen + (opcode == OPCODE_TEXT && isFin);
@@ -2632,7 +2634,8 @@ public:
     Mask mask = recvHeader.getMask();
 
     auto handleMessage =
-        [this,opcode,payloadTarget,payloadLen,mask,isFin,maxSize,originalMaxSize,message=kj::mv(message)]() mutable
+        [this,opcode,payloadTarget,payloadLen,mask,isFin,maxSize,originalMaxSize,
+         isCompressed,message=kj::mv(message)]() mutable
         -> kj::Promise<Message> {
       if (!mask.isZero()) {
         mask.apply(kj::arrayPtr(payloadTarget, payloadLen));
@@ -2645,14 +2648,25 @@ public:
         return receive(newMax);
       }
 
+      // Provide a reasonable error if a compressed frame is received without compression enabled.
+      if (isCompressed && compressionConfig == nullptr) {
+        return errorHandler.handleWebSocketProtocolError({
+          1002, kj::str(
+              "Received a WebSocket frame whose compression bit was set, but the compression "
+              "extension was not negotiated for this connection.")
+        });
+      }
+
       switch (opcode) {
         case OPCODE_CONTINUATION:
           // Shouldn't get here; handled above.
           KJ_UNREACHABLE;
         case OPCODE_TEXT:
 #if KJ_HAS_ZLIB
-          KJ_IF_MAYBE(config, compressionConfig) {
+          if (isCompressed) {
+            auto& config = KJ_ASSERT_NONNULL(compressionConfig);
             auto& decompressor = KJ_ASSERT_NONNULL(decompressionContext);
+            KJ_ASSERT(message.size() >= 4);
             auto tail = message.slice(message.size() - 4, message.size());
             // Note that we added an additional 4 bytes to `message`s capacity to account for these
             // extra bytes. See `amountToAllocate` in the if(recvHeader.isCompressed()) block above.
@@ -2660,7 +2674,7 @@ public:
             memcpy(tail.begin(), tailBytes, sizeof(tailBytes));
             // We have to append 0x00 0x00 0xFF 0xFF to the message before inflating.
             // See: https://datatracker.ietf.org/doc/html/rfc7692#section-7.2.2
-            if (config->inboundNoContextTakeover) {
+            if (config.inboundNoContextTakeover) {
               // We must reset context on each message.
               decompressor.reset();
             }
@@ -2675,8 +2689,10 @@ public:
           return Message(kj::String(message.releaseAsChars()));
         case OPCODE_BINARY:
 #if KJ_HAS_ZLIB
-          KJ_IF_MAYBE(config, compressionConfig) {
+          if (isCompressed) {
+            auto& config = KJ_ASSERT_NONNULL(compressionConfig);
             auto& decompressor = KJ_ASSERT_NONNULL(decompressionContext);
+            KJ_ASSERT(message.size() >= 4);
             auto tail = message.slice(message.size() - 4, message.size());
             // Note that we added an additional 4 bytes to `message`s capacity to account for these
             // extra bytes. See `amountToAllocate` in the if(recvHeader.isCompressed()) block above.
@@ -2684,7 +2700,7 @@ public:
             memcpy(tail.begin(), tailBytes, sizeof(tailBytes));
             // We have to append 0x00 0x00 0xFF 0xFF to the message before inflating.
             // See: https://datatracker.ietf.org/doc/html/rfc7692#section-7.2.2
-            if (config->inboundNoContextTakeover) {
+            if (config.inboundNoContextTakeover) {
               // We must reset context on each message.
               decompressor.reset();
             }
