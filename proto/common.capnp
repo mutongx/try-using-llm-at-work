@@ -18,10 +18,10 @@ struct EvalOption {
 }
 
 struct PredictOption {
-  repeatPenaltySize @0 :UInt32;
-  repeatPenalty @1 :Float32;
-  alphaPresence @2 :Float32;
-  alphaFrequency @3 :Float32;
+  penaltyContextSize @0 :UInt32;
+  penaltyRepetition @1 :Float32;
+  penaltyPresence @2 :Float32;
+  penaltyFrequency @3 :Float32;
   topK @4 :UInt32;
   tailFreeZ @5 :Float32;
   typicalP @6 :Float32;

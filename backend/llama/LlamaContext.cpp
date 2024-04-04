@@ -62,19 +62,15 @@ llama_token LlamaContext::Predict(proto::PredictOption::Reader option) {
   }
   llama_token_data_array candidates_p = {candidates.data(), candidates.size(), false};
 
-  size_t repeat_penalty_size =
-      std::min(std::min(tokens_size_, static_cast<size_t>(option.getRepeatPenaltySize())), context_size_);
-  llama_sample_repetition_penalty(context_,
-                                  &candidates_p,
-                                  tokens_.data() + tokens_size_ - repeat_penalty_size,
-                                  repeat_penalty_size,
-                                  option.getRepeatPenalty());
-  llama_sample_frequency_and_presence_penalties(context_,
-                                                &candidates_p,
-                                                tokens_.data() + tokens_size_ - repeat_penalty_size,
-                                                repeat_penalty_size,
-                                                option.getAlphaFrequency(),
-                                                option.getAlphaPresence());
+  size_t penalty_context_size =
+      std::min(std::min(tokens_size_, static_cast<size_t>(option.getPenaltyContextSize())), context_size_);
+  llama_sample_repetition_penalties(context_,
+                                    &candidates_p,
+                                    tokens_.data() + tokens_size_ - penalty_context_size,
+                                    penalty_context_size,
+                                    option.getPenaltyRepetition(),
+                                    option.getPenaltyFrequency(),
+                                    option.getPenaltyPresence());
 
   if (option.getTemperature() <= 0) {
     return llama_sample_token_greedy(context_, &candidates_p);
