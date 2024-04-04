@@ -2,14 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 
 configure_file(../thirdparty/llama.cpp/ggml-metal.metal ggml-metal.metal COPYONLY)
 
-set(INITIALIZE_SRCS
-        initialize.cpp
-)
-
-set(INITIALIZE_HDRS
-        initialize.h
-)
-
 set(CAPNP_WRAPPER_HDRS
         capnp/CapnpMessage.h
         capnp/CapnpUtilities.h
@@ -64,7 +56,6 @@ set(SERVICE_HDRS
 )
 
 add_executable(backend
-        ${INITIALIZE_SRCS} ${INITIALIZE_HDRS}
         ${CAPNP_WRAPPER_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
         ${UTILITIES_SRCS} ${UTILITIES_HDRS}
@@ -86,7 +77,6 @@ set(TEST_SRCS
 )
 
 add_executable(backend_test
-        ${INITIALIZE_SRCS} ${INITIALIZE_HDRS}
         ${CAPNP_WRAPPER_HDRS}
         ${LLAMA_WRAPPER_SRCS} ${LLAMA_WRAPPER_HDRS}
         ${UTILITIES_SRCS} ${UTILITIES_HDRS}
