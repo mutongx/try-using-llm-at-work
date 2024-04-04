@@ -32,16 +32,15 @@ int main(int argc, char ** argv) {
     gpt_params params;
 
     if (argc == 1 || argv[1][0] == '-') {
-        printf("usage: %s MODEL_PATH [N_KV_MAX] [IS_PP_SHARED] [NGL] [MMQ] <PP> <TG> <PL>\n" , argv[0]);
+        printf("usage: %s MODEL_PATH [N_KV_MAX] [IS_PP_SHARED] [NGL] <PP> <TG> <PL>\n" , argv[0]);
         printf("  <PP>, <TG> and PL are comma-separated lists of numbers without spaces\n\n");
-        printf("  example: %s ggml-model-f16.gguf 2048 0 999 0 128,256,512 128,256 1,2,4,8,16,32\n\n", argv[0]);
+        printf("  example: %s ggml-model-f16.gguf 2048 0 999 128,256,512 128,256 1,2,4,8,16,32\n\n", argv[0]);
         return 1 ;
     }
 
     int n_kv_max     = 2048;
     int is_pp_shared = 0;
     int n_gpu_layers = 0;
-    int mmq          = 0;
 
     std::vector<int> n_pp = { 128, 256, 512, 1024, 2048, 3584, 7680, };
     std::vector<int> n_tg = { 128, 256, };
@@ -65,30 +64,30 @@ int main(int argc, char ** argv) {
     }
 
     if (argc >= 6) {
-        mmq = std::atoi(argv[5]);
+        n_pp = parse_list(argv[5]);
     }
 
     if (argc >= 7) {
-        n_pp = parse_list(argv[6]);
+        n_tg = parse_list(argv[6]);
     }
 
     if (argc >= 8) {
-        n_tg = parse_list(argv[7]);
-    }
-
-    if (argc >= 9) {
-        n_pl = parse_list(argv[8]);
+        n_pl = parse_list(argv[7]);
     }
 
     // init LLM
 
-    llama_backend_init(params.numa);
+    llama_backend_init();
+    llama_numa_init(params.numa);
 
     // initialize the model
 
     llama_model_params model_params = llama_model_default_params();
 
+    const std::vector<float> t_split(llama_max_devices(), 0.0f);
+
     model_params.n_gpu_layers = n_gpu_layers;
+    model_params.tensor_split = t_split.data();
 
     llama_model * model = llama_load_model_from_file(params.model.c_str(), model_params);
 
@@ -102,10 +101,12 @@ int main(int argc, char ** argv) {
     ctx_params.seed      = 1234;
     ctx_params.n_ctx     = n_kv_max;
     ctx_params.n_batch   = 512;
-    ctx_params.mul_mat_q = mmq;
 
     ctx_params.n_threads       = params.n_threads;
     ctx_params.n_threads_batch = params.n_threads_batch == -1 ? params.n_threads : params.n_threads_batch;
+
+    // ensure enough sequences are available
+    ctx_params.n_seq_max = *std::max_element(n_pl.begin(), n_pl.end());
 
     llama_context * ctx = llama_new_context_with_model(model, ctx_params);
 
@@ -114,7 +115,7 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
-    llama_batch batch = llama_batch_init(n_kv_max, 0);
+    llama_batch batch = llama_batch_init(n_kv_max, 0, 1);
 
     // decode in batches of ctx_params.n_batch tokens
     auto decode_helper = [](llama_context * ctx, llama_batch & batch, int32_t n_batch) {
@@ -123,11 +124,12 @@ int main(int argc, char ** argv) {
 
             llama_batch batch_view = {
                 n_tokens,
-                batch.token  + i,
+                batch.token    + i,
                 nullptr,
-                batch.pos    + i,
-                batch.seq_id + i,
-                batch.logits + i,
+                batch.pos      + i,
+                batch.n_seq_id + i,
+                batch.seq_id   + i,
+                batch.logits   + i,
                 0, 0, 0, // unused
             };
 
@@ -136,6 +138,8 @@ int main(int argc, char ** argv) {
                 LOG_TEE("failed to decode the batch, n_batch = %d, ret = %d\n", n_batch, ret);
                 return false;
             }
+
+            llama_synchronize(ctx);
         }
 
         return true;
@@ -143,13 +147,8 @@ int main(int argc, char ** argv) {
 
     // warm up
     {
-        batch.n_tokens = 16;
-
-        for (int i = 0; i < batch.n_tokens; ++i) {
-            batch.token[i]  = 0;
-            batch.pos[i]    = i;
-            batch.seq_id[i] = 0;
-            batch.logits[i] = false;
+        for (int i = 0; i < 16; ++i) {
+            llama_batch_add(batch, 0, i, { 0 }, false);
         }
 
         if (!decode_helper(ctx, batch, ctx_params.n_batch)) {
@@ -157,6 +156,10 @@ int main(int argc, char ** argv) {
             return 1;
         }
     }
+
+    LOG_TEE("\n");
+    LOG_TEE("%s: n_kv_max = %d, is_pp_shared = %d, n_gpu_layers = %d, n_threads = %u, n_threads_batch = %u\n", __func__, n_kv_max, is_pp_shared, n_gpu_layers, ctx_params.n_threads, ctx_params.n_threads_batch);
+    LOG_TEE("\n");
 
     LOG_TEE("|%6s | %6s | %4s | %6s | %8s | %8s | %8s | %8s | %8s | %8s |\n", "PP",     "TG",     "B",    "N_KV",     "T_PP s",   "S_PP t/s", "T_TG s",   "S_TG t/s", "T s",      "S t/s");
     LOG_TEE("|%6s-|-%6s-|-%4s-|-%6s-|-%8s-|-%8s-|-%8s-|-%8s-|-%8s-|-%8s-|\n", "------", "------", "----", "------", "--------", "--------", "--------", "--------", "--------", "--------");
@@ -174,19 +177,18 @@ int main(int argc, char ** argv) {
                     continue;
                 }
 
-                batch.n_tokens = is_pp_shared ? pp : pl*pp;
+                llama_batch_clear(batch);
 
-                for (int i = 0; i < batch.n_tokens; ++i) {
-                    batch.token[i]  = 0;
-                    batch.pos[i]    = i;
-                    batch.seq_id[i] = 0;
-                    batch.logits[i] = false;
+                for (int i = 0; i < pp; ++i) {
+                    for (int j = 0; j < (is_pp_shared ? 1 : pl); ++j) {
+                        llama_batch_add(batch, 0, i, { j }, false);
+                    }
                 }
                 batch.logits[batch.n_tokens - 1] = true;
 
                 const auto t_pp_start = ggml_time_us();
 
-                llama_kv_cache_tokens_rm(ctx, -1, -1);
+                llama_kv_cache_clear(ctx);
 
                 if (!decode_helper(ctx, batch, ctx_params.n_batch)) {
                     LOG_TEE("%s: llama_decode() failed\n", __func__);
@@ -195,7 +197,7 @@ int main(int argc, char ** argv) {
 
                 if (is_pp_shared) {
                     for (int32_t i = 1; i < pl; ++i) {
-                        llama_kv_cache_seq_cp(ctx, 0, i, 0, pp);
+                        llama_kv_cache_seq_cp(ctx, 0, i, -1, -1);
                     }
                 }
 
@@ -204,13 +206,10 @@ int main(int argc, char ** argv) {
                 const auto t_tg_start = ggml_time_us();
 
                 for (int i = 0; i < tg; ++i) {
-                    batch.n_tokens = pl;
+                    llama_batch_clear(batch);
 
                     for (int j = 0; j < pl; ++j) {
-                        batch.token[j]  = 0;
-                        batch.pos[j]    = pp + i;
-                        batch.seq_id[j] = j;
-                        batch.logits[j] = true;
+                        llama_batch_add(batch, 0, pp + i, { j }, true);
                     }
 
                     if (!decode_helper(ctx, batch, ctx_params.n_batch)) {
