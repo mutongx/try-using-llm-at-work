@@ -9,10 +9,10 @@
     "threadCount": 1
   },
   "predict": {
-    "repeatPenaltySize": 0,
-    "repeatPenalty": 0.0,
-    "alphaPresence": 0.0,
-    "alphaFrequency": 0.0,
+    "penaltyContextSize": 0,
+    "penaltyRepetition": 0.0,
+    "penaltyPresence": 0.0,
+    "penaltyFrequency": 0.0,
     "topK": 0.0,
     "tailFreeZ": 1.0,
     "typicalP": 1.0,
